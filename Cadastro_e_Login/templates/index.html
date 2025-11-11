@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Página Inicial{% endblock %}
+
+{% block content %}
+    <h1>Bem-vindo ao Sistema de Login Flask</h1>
+    
+    {% if current_user.is_authenticated %}
+        <p>Olá, {{ current_user.nome }}! Você está logado.</p>
+        <p><a href="{{ url_for('dashboard') }}" class="link">Ir para o Dashboard</a></p>
+    {% else %}
+        <p>Este é um exemplo de sistema de autenticação com Flask.</p>
+        <p>
+            <a href="{{ url_for('registro') }}" class="link">Criar uma conta</a> ou 
+            <a href="{{ url_for('login') }}" class="link">fazer login</a>
+        </p>
+    {% endif %}
+{% endblock %}

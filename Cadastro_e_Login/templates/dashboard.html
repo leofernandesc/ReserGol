@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+    <h2>Dashboard - Área Protegida</h2>
+    <p><strong>Nome:</strong> {{ usuario.nome }}</p>
+    <p><strong>Email:</strong> {{ usuario.email }}</p>
+    <p><strong>ID:</strong> {{ usuario.id }}</p>
+    
+    <p style="margin-top: 20px;">
+        Esta é uma página protegida que só pode ser acessada por usuários autenticados.
+    </p>
+    
+    <p style="margin-top: 20px;">
+        <a href="{{ url_for('logout') }}" class="link">Fazer Logout</a>
+    </p>
+{% endblock %}
