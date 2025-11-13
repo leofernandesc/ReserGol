@@ -24,9 +24,23 @@
         .nav a:hover { text-decoration: underline; }
         .link { color: #007bff; text-decoration: none; }
         .link:hover { text-decoration: underline; }
+        .logo-canto-direito {
+            position: fixed;
+            top: 15px;
+            right: 20px;
+            z-index: 9999;
+        }       
+        .logo-canto-direito img {
+        height: 60px; /* escolha o tamanho ideal para sua logo */
+        width: auto;
+        }
     </style>
 </head>
 <body>
+    <div class="logo-canto-direito">
+        <img src="{{ url_for('static', filename='resergolLogo1.png') }}" alt="Logo ReserGol">
+    </div>
+
     <div class="nav">
         <a href="{{ url_for('index') }}">Início</a>
         {% if current_user.is_authenticated %}
