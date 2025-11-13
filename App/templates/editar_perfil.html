@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Perfil{% endblock %}
+
+{% block content %}
+    <h2>Editar Perfil</h2>
+    
+    <form method="POST">
+        <h3 style="margin-top: 20px; margin-bottom: 15px;">Informações Básicas</h3>
+        
+        <div class="form-group">
+            <label for="nome">Nome Completo:</label>
+            <input type="text" id="nome" name="nome" value="{{ usuario.nome }}" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" value="{{ usuario.email }}" required>
+        </div>
+        
+        <h3 style="margin-top: 30px; margin-bottom: 15px;">Alterar Senha (opcional)</h3>
+        <p style="color: #666; font-size: 14px; margin-bottom: 15px;">
+            Deixe em branco se não quiser alterar a senha
+        </p>
+        
+        <div class="form-group">
+            <label for="senha_atual">Senha Atual:</label>
+            <input type="password" id="senha_atual" name="senha_atual">
+        </div>
+        
+        <div class="form-group">
+            <label for="senha_nova">Nova Senha:</label>
+            <input type="password" id="senha_nova" name="senha_nova">
+        </div>
+        
+        <div class="form-group">
+            <label for="senha_confirmar">Confirmar Nova Senha:</label>
+            <input type="password" id="senha_confirmar" name="senha_confirmar">
+        </div>
+        
+        <button type="submit" style="margin-top: 20px;">Salvar Alterações</button>
+    </form>
+    
+    <p style="margin-top: 15px;">
+        <a href="{{ url_for('perfil') }}" class="link">Cancelar e voltar</a>
+    </p>
+{% endblock %}

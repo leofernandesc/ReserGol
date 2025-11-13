@@ -1,4 +1,4 @@
-from flask import Flask, render_template  # <--- IMPORT ADD!
+from flask import Flask, render_template  
 from flask_login import LoginManager
 from controllers.usuario_controller import UsuarioController
 from models.usuario_model import db, Usuario
@@ -18,7 +18,7 @@ def load_user(user_id):
 
 @app.route('/')
 def index():
-    return render_template('index.html')  # <-- CORRIGIDO! Tem que ter return.
+    return render_template('index.html')  
 
 @app.route('/registro', methods=['GET', 'POST'])
 def registro():
@@ -39,6 +39,15 @@ def logout():
 @app.route('/usuarios')
 def lista_usuarios():
     return UsuarioController.lista_usuarios()
+
+@app.route('/perfil')
+def perfil():
+    return UsuarioController.perfil()
+
+@app.route('/editar-perfil', methods=['GET', 'POST'])
+def editar_perfil():
+    return UsuarioController.editar_perfil()
+
 
 with app.app_context():
     db.create_all()

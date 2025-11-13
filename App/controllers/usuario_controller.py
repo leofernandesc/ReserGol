@@ -69,3 +69,61 @@ class UsuarioController:
     def lista_usuarios():
         usuarios = Usuario.query.all()
         return render_template('lista_usuarios.html', usuarios=usuarios)
+
+
+    @login_required
+    def perfil():
+        """Exibe as informações do perfil do usuário atual"""
+        return render_template('perfil.html', usuario=current_user)
+
+    @login_required
+    def editar_perfil():
+        """Permite o usuário editar suas informações de perfil"""
+        if request.method == 'POST':
+            nome = request.form.get('nome')
+            email = request.form.get('email')
+            senha_atual = request.form.get('senha_atual')
+            senha_nova = request.form.get('senha_nova')
+            senha_confirmar = request.form.get('senha_confirmar')
+
+            # Validações
+            if not nome or not email:
+                flash('Nome e email são obrigatórios!', 'danger')
+                return redirect(url_for('editar_perfil'))
+
+            # Verifica se email já está em uso por outro usuário
+            usuario_existe = Usuario.query.filter_by(email=email).first()
+            if usuario_existe and usuario_existe.id != current_user.id:
+                flash('Este email já está em uso por outro usuário!', 'warning')
+                return redirect(url_for('editar_perfil'))
+
+            # Atualiza nome e email
+            current_user.nome = nome
+            current_user.email = email
+
+            # Se o usuário quer alterar a senha
+            if senha_nova:
+                # Verifica se forneceu a senha atual
+                if not senha_atual:
+                    flash('Para alterar a senha, você precisa informar a senha atual!', 'danger')
+                    return redirect(url_for('editar_perfil'))
+
+                # Verifica se a senha atual está correta
+                if not bcrypt.check_password_hash(current_user.senha_hash, senha_atual):
+                    flash('Senha atual incorreta!', 'danger')
+                    return redirect(url_for('editar_perfil'))
+
+                # Verifica se as senhas novas coincidem
+                if senha_nova != senha_confirmar:
+                    flash('As senhas novas não coincidem!', 'danger')
+                    return redirect(url_for('editar_perfil'))
+
+                # Atualiza a senha
+                current_user.senha_hash = bcrypt.generate_password_hash(senha_nova).decode('utf-8')
+
+            # Salva as alterações no banco
+            db.session.commit()
+            flash('Perfil atualizado com sucesso!', 'success')
+            return redirect(url_for('perfil'))
+
+        return render_template('editar_perfil.html', usuario=current_user)
