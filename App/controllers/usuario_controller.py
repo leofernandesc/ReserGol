@@ -5,6 +5,8 @@ from flask_mail import Message
 from models.usuario_model import db, Usuario
 from itsdangerous import URLSafeTimedSerializer
 from datetime import datetime, timedelta
+from functools import wraps
+from flask import abort
 
 bcrypt = Bcrypt()
 
@@ -29,6 +31,65 @@ def enviar_email_reset(email, token):
                   recipients=[email])
     msg.body = f"Para redefinir sua senha, acesse: {link}"
     mail.send(msg)
+
+# Decorador para proteger rotas admin
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated or not current_user.is_admin():
+            flash('Acesso negado! Apenas administradores.', 'danger')
+            return redirect(url_for('index'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+# Adicione dentro da classe UsuarioController:
+
+@login_required
+def admin_listar_usuarios():
+    """Apenas admin - lista todos os usuários com opção de promover/rebaixar"""
+    if not current_user.is_admin():
+        flash('Acesso negado!', 'danger')
+        return redirect(url_for('dashboard'))
+    
+    usuarios = Usuario.query.all()
+    return render_template('admin_usuarios.html', usuarios=usuarios)
+
+@login_required
+def promover_para_dono(usuario_id):
+    """Admin promove usuário para dono de quadra"""
+    if not current_user.is_admin():
+        flash('Acesso negado!', 'danger')
+        return redirect(url_for('dashboard'))
+    
+    usuario = Usuario.query.get_or_404(usuario_id)
+    
+    if usuario.role == 'admin':
+        flash('Não é possível alterar o role de um administrador!', 'warning')
+        return redirect(url_for('admin_usuarios'))
+    
+    usuario.role = 'dono_quadra'
+    db.session.commit()
+    flash(f'{usuario.nome} foi promovido para Dono de Quadra!', 'success')
+    return redirect(url_for('admin_usuarios'))
+
+@login_required
+def rebaixar_para_usuario(usuario_id):
+    """Admin rebaixa dono de quadra para usuário comum"""
+    if not current_user.is_admin():
+        flash('Acesso negado!', 'danger')
+        return redirect(url_for('dashboard'))
+    
+    usuario = Usuario.query.get_or_404(usuario_id)
+    
+    if usuario.role == 'admin':
+        flash('Não é possível alterar o role de um administrador!', 'warning')
+        return redirect(url_for('admin_usuarios'))
+    
+    usuario.role = 'usuario'
+    db.session.commit()
+    flash(f'{usuario.nome} foi rebaixado para Usuário Comum!', 'success')
+    return redirect(url_for('admin_usuarios'))
+
 
 # ===== CLASSE CONTROLLER =====
 class UsuarioController:
@@ -210,3 +271,52 @@ class UsuarioController:
             return redirect(url_for('perfil'))
 
         return render_template('editar_perfil.html', usuario=current_user)
+    
+    # Adicione dentro da classe UsuarioController:
+
+    @login_required
+    def admin_listar_usuarios():
+        """Apenas admin - lista todos os usuários com opção de promover/rebaixar"""
+        if not current_user.is_admin():
+            flash('Acesso negado!', 'danger')
+            return redirect(url_for('dashboard'))
+        
+        usuarios = Usuario.query.all()
+        return render_template('admin_usuarios.html', usuarios=usuarios)
+
+    @login_required
+    def promover_para_dono(usuario_id):
+        """Admin promove usuário para dono de quadra"""
+        if not current_user.is_admin():
+            flash('Acesso negado!', 'danger')
+            return redirect(url_for('dashboard'))
+        
+        usuario = Usuario.query.get_or_404(usuario_id)
+        
+        if usuario.role == 'admin':
+            flash('Não é possível alterar o role de um administrador!', 'warning')
+            return redirect(url_for('admin_usuarios'))
+        
+        usuario.role = 'dono_quadra'
+        db.session.commit()
+        flash(f'{usuario.nome} foi promovido para Dono de Quadra!', 'success')
+        return redirect(url_for('admin_usuarios'))
+
+    @login_required
+    def rebaixar_para_usuario(usuario_id):
+        """Admin rebaixa dono de quadra para usuário comum"""
+        if not current_user.is_admin():
+            flash('Acesso negado!', 'danger')
+            return redirect(url_for('dashboard'))
+        
+        usuario = Usuario.query.get_or_404(usuario_id)
+        
+        if usuario.role == 'admin':
+            flash('Não é possível alterar o role de um administrador!', 'warning')
+            return redirect(url_for('admin_usuarios'))
+        
+        usuario.role = 'usuario'
+        db.session.commit()
+        flash(f'{usuario.nome} foi rebaixado para Usuário Comum!', 'success')
+        return redirect(url_for('admin_usuarios'))
+

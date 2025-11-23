@@ -10,9 +10,15 @@ class Usuario(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     senha_hash = db.Column(db.String(200), nullable=False)
     
-    # Novos campos para controle de bloqueio
+    # Sistema de Roles/Permissões
+    role = db.Column(db.String(20), default='usuario', nullable=False)  # 'usuario', 'dono_quadra', 'admin'
+    
+    # Campos de bloqueio (já existentes)
     tentativas_login = db.Column(db.Integer, default=0)
     bloqueado_ate = db.Column(db.DateTime, nullable=True)
+    
+    # Relacionamento com quadras (um dono pode ter várias quadras)
+    quadras = db.relationship('Quadra', backref='dono', lazy=True, cascade='all, delete-orphan')
     
     def __repr__(self):
         return f'<Usuario {self.email}>'
@@ -27,3 +33,21 @@ class Usuario(UserMixin, db.Model):
         """Reseta contador de tentativas após login bem-sucedido"""
         self.tentativas_login = 0
         self.bloqueado_ate = None
+    
+    # Métodos de verificação de permissão
+    def is_admin(self):
+        """Verifica se é administrador"""
+        return self.role == 'admin'
+    
+    def is_dono_quadra(self):
+        """Verifica se é dono de quadra"""
+        return self.role == 'dono_quadra' or self.role == 'admin'
+    
+    def tem_permissao(self, role_necessaria):
+        """Verifica se tem a permissão necessária"""
+        hierarquia = {
+            'usuario': 1,
+            'dono_quadra': 2,
+            'admin': 3
+        }
+        return hierarquia.get(self.role, 0) >= hierarquia.get(role_necessaria, 0)

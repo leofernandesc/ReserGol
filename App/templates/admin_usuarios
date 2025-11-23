@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Gerenciar Usuários - Admin{% endblock %}
+
+{% block content %}
+    <h2>Gerenciar Usuários</h2>
+    
+    <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+        <thead>
+            <tr style="background: #007bff; color: white;">
+                <th style="padding: 10px; border: 1px solid #ddd;">ID</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">Nome</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">Email</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">Role</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for usuario in usuarios %}
+            <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;">{{ usuario.id }}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">{{ usuario.nome }}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">{{ usuario.email }}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">
+                    {% if usuario.role == 'admin' %}
+                        <span style="background: #dc3545; color: white; padding: 4px 8px; border-radius: 4px;">Admin</span>
+                    {% elif usuario.role == 'dono_quadra' %}
+                        <span style="background: #28a745; color: white; padding: 4px 8px; border-radius: 4px;">Dono de Quadra</span>
+                    {% else %}
+                        <span style="background: #6c757d; color: white; padding: 4px 8px; border-radius: 4px;">Usuário</span>
+                    {% endif %}
+                </td>
+                <td style="padding: 10px; border: 1px solid #ddd;">
+                    {% if usuario.role != 'admin' %}
+                        {% if usuario.role == 'usuario' %}
+                            <a href="{{ url_for('promover_usuario', usuario_id=usuario.id) }}" 
+                               style="background: #28a745; color: white; padding: 5px 10px; text-decoration: none; border-radius: 4px;">
+                                Promover para Dono
+                            </a>
+                        {% else %}
+                            <a href="{{ url_for('rebaixar_usuario', usuario_id=usuario.id) }}" 
+                               style="background: #ffc107; color: white; padding: 5px 10px; text-decoration: none; border-radius: 4px;">
+                                Rebaixar para Usuário
+                            </a>
+                        {% endif %}
+                    {% else %}
+                        <span style="color: #999;">Administrador</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
