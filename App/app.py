@@ -2,15 +2,26 @@ from flask import Flask, render_template
 from flask_login import LoginManager
 from controllers.usuario_controller import UsuarioController
 from models.usuario_model import db, Usuario
+from flask_mail import Mail, Message
+
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'sua-chave-secreta'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'        
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = 'leonardo.fernandesc23@gmail.com'
+app.config['MAIL_PASSWORD'] = 'wwxuzuzfiweapxlr'
+
 db.init_app(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
+
+mail = Mail(app)
+
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -47,6 +58,16 @@ def perfil():
 @app.route('/editar-perfil', methods=['GET', 'POST'])
 def editar_perfil():
     return UsuarioController.editar_perfil()
+
+@app.route('/esqueci-senha', methods=['GET', 'POST'])
+def esqueci_senha():
+    return UsuarioController.esqueci_senha()
+
+@app.route('/resetar-senha/<token>', methods=['GET', 'POST'])
+def resetar_senha(token):
+    return UsuarioController.resetar_senha(token)
+
+
 
 
 with app.app_context():

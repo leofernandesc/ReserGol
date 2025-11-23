@@ -14,5 +14,5 @@ source .venv/bin/activate
 Se houver alguma alteração na pasta requirements, atualizar o venv com o seguinte comando:
 pip install -r requirements.txt
 
-Após ativar o ambiente virtual, mude para o diretório Backend e rode o comando:
+Após ativar o ambiente virtual, mude para o diretório App e rode o comando:
 python app.py
