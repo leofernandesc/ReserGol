@@ -320,3 +320,134 @@ class UsuarioController:
         flash(f'{usuario.nome} foi rebaixado para Usuário Comum!', 'success')
         return redirect(url_for('admin_usuarios'))
 
+    @login_required
+    def admin_listar_usuarios():
+        """Apenas admin - lista todos os usuários com opção de promover/rebaixar"""
+        if not current_user.is_admin():
+            flash('Acesso negado!', 'danger')
+            return redirect(url_for('dashboard'))
+        
+        # Busca por nome ou email
+        busca = request.args.get('busca', '')
+        
+        if busca:
+            usuarios = Usuario.query.filter(
+                (Usuario.nome.contains(busca)) | (Usuario.email.contains(busca))
+            ).all()
+        else:
+            usuarios = Usuario.query.all()
+        
+        return render_template('admin_usuarios.html', usuarios=usuarios, busca=busca)
+
+    @login_required
+    def promover_para_dono(usuario_id):
+        """Admin promove usuário para dono de quadra"""
+        if not current_user.is_admin():
+            flash('Acesso negado!', 'danger')
+            return redirect(url_for('dashboard'))
+        
+        usuario = Usuario.query.get_or_404(usuario_id)
+        
+        if usuario.role == 'admin':
+            flash('Não é possível alterar o role de um administrador!', 'warning')
+            return redirect(url_for('admin_usuarios'))
+        
+        usuario.role = 'dono_quadra'
+        db.session.commit()
+        flash(f'{usuario.nome} foi promovido para Dono de Quadra!', 'success')
+        return redirect(url_for('admin_usuarios'))
+
+    @login_required
+    def rebaixar_para_usuario(usuario_id):
+        """Admin rebaixa dono de quadra para usuário comum"""
+        if not current_user.is_admin():
+            flash('Acesso negado!', 'danger')
+            return redirect(url_for('dashboard'))
+        
+        usuario = Usuario.query.get_or_404(usuario_id)
+        
+        if usuario.role == 'admin':
+            flash('Não é possível alterar o role de um administrador!', 'warning')
+            return redirect(url_for('admin_usuarios'))
+        
+        usuario.role = 'usuario'
+        db.session.commit()
+        flash(f'{usuario.nome} foi rebaixado para Usuário Comum!', 'success')
+        return redirect(url_for('admin_usuarios'))
+
+    @login_required
+    def admin_editar_usuario(usuario_id):
+        """Admin edita qualquer usuário"""
+        if not current_user.is_admin():
+            flash('Acesso negado!', 'danger')
+            return redirect(url_for('dashboard'))
+        
+        usuario = Usuario.query.get_or_404(usuario_id)
+        
+        if request.method == 'POST':
+            nome = request.form.get('nome')
+            email = request.form.get('email')
+            role = request.form.get('role')
+            
+            # Validações
+            if not nome or not email:
+                flash('Nome e email são obrigatórios!', 'danger')
+                return redirect(url_for('admin_editar_usuario', usuario_id=usuario_id))
+            
+            # Verifica se email já existe para outro usuário
+            usuario_existe = Usuario.query.filter_by(email=email).first()
+            if usuario_existe and usuario_existe.id != usuario.id:
+                flash('Este email já está em uso!', 'warning')
+                return redirect(url_for('admin_editar_usuario', usuario_id=usuario_id))
+            
+            # Atualiza dados
+            usuario.nome = nome
+            usuario.email = email
+            
+            # Só permite alterar role se não for o próprio admin editando a si mesmo
+            if usuario.id != current_user.id:
+                usuario.role = role
+            
+            db.session.commit()
+            flash('Usuário atualizado com sucesso!', 'success')
+            return redirect(url_for('admin_usuarios'))
+        
+        return render_template('admin_editar_usuario.html', usuario=usuario)
+
+    @login_required
+    def admin_remover_usuario(usuario_id):
+        """Admin remove um usuário"""
+        if not current_user.is_admin():
+            flash('Acesso negado!', 'danger')
+            return redirect(url_for('dashboard'))
+        
+        usuario = Usuario.query.get_or_404(usuario_id)
+        
+        # Não permite remover a si mesmo
+        if usuario.id == current_user.id:
+            flash('Você não pode remover sua própria conta!', 'warning')
+            return redirect(url_for('admin_usuarios'))
+        
+        # Não permite remover outro admin
+        if usuario.role == 'admin':
+            flash('Não é possível remover outro administrador!', 'warning')
+            return redirect(url_for('admin_usuarios'))
+        
+        nome_usuario = usuario.nome
+        db.session.delete(usuario)
+        db.session.commit()
+        flash(f'Usuário {nome_usuario} foi removido com sucesso!', 'success')
+        return redirect(url_for('admin_usuarios'))
+
+    @login_required
+    def admin_desbloquear_usuario(usuario_id):
+        """Admin desbloqueia usuário manualmente"""
+        if not current_user.is_admin():
+            flash('Acesso negado!', 'danger')
+            return redirect(url_for('dashboard'))
+        
+        usuario = Usuario.query.get_or_404(usuario_id)
+        usuario.resetar_tentativas()
+        db.session.commit()
+        flash(f'Usuário {usuario.nome} foi desbloqueado!', 'success')
+        return redirect(url_for('admin_usuarios'))

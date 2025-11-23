@@ -67,7 +67,7 @@ def esqueci_senha():
 def resetar_senha(token):
     return UsuarioController.resetar_senha(token)
 
-# NOVAS ROTAS - Gerenciamento de Roles
+# ROTAS - Gerenciamento de Usuários (Admin)
 @app.route('/admin/usuarios')
 def admin_usuarios():
     return UsuarioController.admin_listar_usuarios()
@@ -79,6 +79,19 @@ def promover_usuario(usuario_id):
 @app.route('/admin/rebaixar-usuario/<int:usuario_id>')
 def rebaixar_usuario(usuario_id):
     return UsuarioController.rebaixar_para_usuario(usuario_id)
+
+@app.route('/admin/editar-usuario/<int:usuario_id>', methods=['GET', 'POST'])
+def admin_editar_usuario(usuario_id):
+    return UsuarioController.admin_editar_usuario(usuario_id)
+
+@app.route('/admin/remover-usuario/<int:usuario_id>')
+def admin_remover_usuario(usuario_id):
+    return UsuarioController.admin_remover_usuario(usuario_id)
+
+@app.route('/admin/desbloquear-usuario/<int:usuario_id>')
+def admin_desbloquear_usuario(usuario_id):
+    return UsuarioController.admin_desbloquear_usuario(usuario_id)
+
 
 # NOVAS ROTAS - Quadras
 @app.route('/quadras')
