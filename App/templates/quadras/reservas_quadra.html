@@ -3,19 +3,32 @@
 {% block title %}Reservas - {{ quadra.nome }}{% endblock %}
 
 {% block content %}
-    <h2>Reservas: {{ quadra.nome }}</h2>
+    <div class="mb-6">
+        <a href="{{ url_for('minhas_quadras') }}" class="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium">
+            <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+            Voltar para Minhas Quadras
+        </a>
+    </div>
+
+    <h2 class="text-3xl font-bold text-gray-800 mb-2">Reservas</h2>
+    <p class="text-lg text-gray-600 mb-6">{{ quadra.nome }}</p>
     
-    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-        <p><strong>Endereço:</strong> {{ quadra.endereco }}</p>
-        <p><strong>Preço/Hora:</strong> R$ {{ "%.2f"|format(quadra.preco_hora) }}</p>
+    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+            <p><span class="font-medium text-gray-700">Endereço:</span> <span class="text-gray-600">{{ quadra.endereco }}</span></p>
+            <p><span class="font-medium text-gray-700">Preço/Hora:</span> <span class="text-green-600 font-bold">R$ {{ "%.2f"|format(quadra.preco_hora) }}</span></p>
+        </div>
     </div>
     
     <!-- Filtros -->
-    <form method="GET" style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-        <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end;">
-            <div class="form-group" style="margin: 0;">
-                <label for="status">Status:</label>
-                <select id="status" name="status" class="form-control">
+    <form method="GET" class="bg-white border border-gray-200 rounded-lg p-4 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+                <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <select id="status" name="status" 
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <option value="todas" {% if filtro_status == 'todas' %}selected{% endif %}>Todas</option>
                     <option value="ativa" {% if filtro_status == 'ativa' %}selected{% endif %}>Ativas</option>
                     <option value="cancelada" {% if filtro_status == 'cancelada' %}selected{% endif %}>Canceladas</option>
@@ -23,15 +36,19 @@
                 </select>
             </div>
             
-            <div class="form-group" style="margin: 0;">
-                <label for="data">Data:</label>
-                <input type="date" id="data" name="data" value="{{ filtro_data }}" class="form-control">
+            <div>
+                <label for="data" class="block text-sm font-medium text-gray-700 mb-1">Data</label>
+                <input type="date" id="data" name="data" value="{{ filtro_data }}"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
             
-            <div>
-                <button type="submit" style="width: auto; padding: 10px 20px;">Filtrar</button>
-                <a href="{{ url_for('ver_reservas_quadra', quadra_id=quadra.id) }}" 
-                   style="background: #6c757d; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;">
+            <div class="flex items-end gap-2">
+                <button type="submit"
+                        class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition">
+                    Filtrar
+                </button>
+                <a href="{{ url_for('ver_reservas_quadra', quadra_id=quadra.id) }}"
+                   class="flex-1 text-center bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-lg transition">
                     Limpar
                 </a>
             </div>
@@ -39,58 +56,73 @@
     </form>
     
     {% if reservas %}
-        <p style="color: #666; margin-bottom: 15px;">Total: <strong>{{ reservas|length }}</strong> reserva(s)</p>
+        <p class="text-sm text-gray-600 mb-4">
+            Total: <strong class="text-gray-800">{{ reservas|length }}</strong> reserva(s)
+        </p>
         
-        <table style="width: 100%; border-collapse: collapse;">
-            <thead>
-                <tr style="background: #007bff; color: white;">
-                    <th style="padding: 10px; border: 1px solid #ddd;">Cliente</th>
-                    <th style="padding: 10px; border: 1px solid #ddd;">Data</th>
-                    <th style="padding: 10px; border: 1px solid #ddd;">Horário</th>
-                    <th style="padding: 10px; border: 1px solid #ddd;">Status</th>
-                    <th style="padding: 10px; border: 1px solid #ddd;">Ações</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for reserva in reservas %}
-                <tr>
-                    <td style="padding: 10px; border: 1px solid #ddd;">
-                        {{ reserva.usuario.nome }}<br>
-                        <small style="color: #666;">{{ reserva.usuario.email }}</small>
-                    </td>
-                    <td style="padding: 10px; border: 1px solid #ddd;">{{ reserva.data.strftime('%d/%m/%Y') }}</td>
-                    <td style="padding: 10px; border: 1px solid #ddd;">
-                        {{ reserva.hora_inicio.strftime('%H:%M') }} - {{ reserva.hora_fim.strftime('%H:%M') }}
-                    </td>
-                    <td style="padding: 10px; border: 1px solid #ddd;">
-                        {% if reserva.status == 'ativa' %}
-                            <span style="background: #28a745; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">Ativa</span>
-                        {% elif reserva.status == 'cancelada' %}
-                            <span style="background: #dc3545; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">Cancelada</span>
-                        {% else %}
-                            <span style="background: #6c757d; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">Concluída</span>
-                        {% endif %}
-                    </td>
-                    <td style="padding: 10px; border: 1px solid #ddd;">
-                        {% if reserva.status == 'ativa' %}
-                            <a href="{{ url_for('dono_cancelar_reserva', reserva_id=reserva.id) }}"
-                               onclick="return confirm('Tem certeza que deseja cancelar esta reserva?')"
-                               style="color: #dc3545;">
-                                Cancelar
-                            </a>
-                        {% else %}
-                            <span style="color: #999;">-</span>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="bg-white rounded-lg shadow overflow-hidden border border-gray-200">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Horário</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for reserva in reservas %}
+                        <tr class="hover:bg-gray-50 transition">
+                            <td class="px-6 py-4">
+                                <div class="text-sm font-medium text-gray-900">{{ reserva.usuario.nome }}</div>
+                                <div class="text-xs text-gray-500">{{ reserva.usuario.email }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {{ reserva.data.strftime('%d/%m/%Y') }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {{ reserva.hora_inicio.strftime('%H:%M') }} - {{ reserva.hora_fim.strftime('%H:%M') }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {% if reserva.status == 'ativa' %}
+                                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                        Ativa
+                                    </span>
+                                {% elif reserva.status == 'cancelada' %}
+                                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                        Cancelada
+                                    </span>
+                                {% else %}
+                                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                        Concluída
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                {% if reserva.status == 'ativa' %}
+                                    <a href="{{ url_for('dono_cancelar_reserva', reserva_id=reserva.id) }}"
+                                       onclick="return confirm('Tem certeza que deseja cancelar esta reserva?')"
+                                       class="text-red-600 hover:text-red-900 font-medium">
+                                        Cancelar
+                                    </a>
+                                {% else %}
+                                    <span class="text-gray-400">-</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     {% else %}
-        <p style="margin-top: 20px; color: #999;">Nenhuma reserva encontrada com os filtros selecionados.</p>
+        <div class="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+            </svg>
+            <p class="mt-4 text-gray-500">Nenhuma reserva encontrada com os filtros selecionados.</p>
+        </div>
     {% endif %}
-    
-    <p style="margin-top: 20px;">
-        <a href="{{ url_for('minhas_quadras') }}" class="link">← Voltar para Minhas Quadras</a>
-    </p>
 {% endblock %}

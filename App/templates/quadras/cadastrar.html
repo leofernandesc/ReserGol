@@ -3,39 +3,64 @@
 {% block title %}Cadastrar Quadra{% endblock %}
 
 {% block content %}
-    <h2>Cadastrar Nova Quadra</h2>
-    <form method="POST">
-        <div class="form-group">
-            <label for="nome">Nome da Quadra:</label>
-            <input type="text" id="nome" name="nome" required>
+    <h2 class="text-3xl font-bold text-gray-800 mb-6">Cadastrar Nova Quadra</h2>
+    
+    <form method="POST" class="space-y-6">
+        <div>
+            <label for="nome" class="block text-sm font-medium text-gray-700 mb-2">Nome da Quadra *</label>
+            <input type="text" id="nome" name="nome" required
+                   placeholder="Ex: Arena Sport Center"
+                   class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
         </div>
-        <div class="form-group">
-            <label for="tipo">Tipo:</label>
-            <select id="tipo" name="tipo" required>
-                <option value="futebol">Futebol</option>
-                <option value="futsal">Futsal</option>
-                <option value="society">Society</option>
-                <option value="tenis">Tênis</option>
-                <option value="basquete">Basquete</option>
-                <option value="volei">Vôlei</option>
-                <option value="beach_tennis">Beach Tennis</option>
+        
+        <div>
+            <label for="tipo" class="block text-sm font-medium text-gray-700 mb-2">Tipo *</label>
+            <select id="tipo" name="tipo" required
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <option value="">Selecione o tipo...</option>
+                <option value="futebol">⚽ Futebol</option>
+                <option value="futsal">🥅 Futsal</option>
+                <option value="society">🏟️ Society</option>
+                <option value="tenis">🎾 Tênis</option>
+                <option value="basquete">🏀 Basquete</option>
+                <option value="volei">🏐 Vôlei</option>
+                <option value="beach_tennis">🏖️ Beach Tennis</option>
             </select>
         </div>
-        <div class="form-group">
-            <label for="endereco">Endereço Completo:</label>
-            <input type="text" id="endereco" name="endereco" required>
+        
+        <div>
+            <label for="endereco" class="block text-sm font-medium text-gray-700 mb-2">Endereço Completo *</label>
+            <input type="text" id="endereco" name="endereco" required
+                   placeholder="Rua, Número, Bairro, Cidade - Estado"
+                   class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
         </div>
-        <div class="form-group">
-            <label for="preco_hora">Preço por Hora (R$):</label>
-            <input type="number" id="preco_hora" name="preco_hora" step="0.01" required>
+        
+        <div>
+            <label for="preco_hora" class="block text-sm font-medium text-gray-700 mb-2">Preço por Hora (R$) *</label>
+            <div class="relative">
+                <span class="absolute left-3 top-2 text-gray-500">R$</span>
+                <input type="number" id="preco_hora" name="preco_hora" step="0.01" required
+                       placeholder="100.00"
+                       class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            </div>
         </div>
-        <div class="form-group">
-            <label for="descricao">Descrição:</label>
-            <textarea id="descricao" name="descricao" rows="4"></textarea>
+        
+        <div>
+            <label for="descricao" class="block text-sm font-medium text-gray-700 mb-2">Descrição (opcional)</label>
+            <textarea id="descricao" name="descricao" rows="4"
+                      placeholder="Descreva sua quadra: cobertura, vestiários, estacionamento, etc."
+                      class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-vertical"></textarea>
         </div>
-        <button type="submit">Cadastrar Quadra</button>
+        
+        <div class="flex gap-3 pt-4">
+            <button type="submit"
+                    class="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-6 rounded-lg transition duration-200">
+                Cadastrar Quadra
+            </button>
+            <a href="{{ url_for('minhas_quadras') }}"
+               class="flex-1 text-center bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-3 px-6 rounded-lg transition duration-200">
+                Cancelar
+            </a>
+        </div>
     </form>
-    <p style="margin-top: 15px;">
-        <a href="{{ url_for('minhas_quadras') }}" class="link">Voltar para Minhas Quadras</a>
-    </p>
 {% endblock %}

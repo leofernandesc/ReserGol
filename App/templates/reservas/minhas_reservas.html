@@ -3,53 +3,84 @@
 {% block title %}Minhas Reservas{% endblock %}
 
 {% block content %}
-    <h2>Minhas Reservas</h2>
+    <h2 class="text-3xl font-bold text-gray-800 mb-6">Minhas Reservas</h2>
     
     {% if reservas %}
-        <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
-            <thead>
-                <tr style="background: #007bff; color: white;">
-                    <th style="padding: 10px; border: 1px solid #ddd;">Quadra</th>
-                    <th style="padding: 10px; border: 1px solid #ddd;">Data</th>
-                    <th style="padding: 10px; border: 1px solid #ddd;">Horário</th>
-                    <th style="padding: 10px; border: 1px solid #ddd;">Status</th>
-                    <th style="padding: 10px; border: 1px solid #ddd;">Ações</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for reserva in reservas %}
-                <tr>
-                    <td style="padding: 10px; border: 1px solid #ddd;">{{ reserva.quadra.nome }}</td>
-                    <td style="padding: 10px; border: 1px solid #ddd;">{{ reserva.data.strftime('%d/%m/%Y') }}</td>
-                    <td style="padding: 10px; border: 1px solid #ddd;">
-                        {{ reserva.hora_inicio.strftime('%H:%M') }} - {{ reserva.hora_fim.strftime('%H:%M') }}
-                    </td>
-                    <td style="padding: 10px; border: 1px solid #ddd;">
-                        {% if reserva.status == 'ativa' %}
-                            <span style="background: #28a745; color: white; padding: 4px 8px; border-radius: 4px;">Ativa</span>
-                        {% elif reserva.status == 'cancelada' %}
-                            <span style="background: #dc3545; color: white; padding: 4px 8px; border-radius: 4px;">Cancelada</span>
-                        {% else %}
-                            <span style="background: #6c757d; color: white; padding: 4px 8px; border-radius: 4px;">Concluída</span>
-                        {% endif %}
-                    </td>
-                    <td style="padding: 10px; border: 1px solid #ddd;">
-                        {% if reserva.status == 'ativa' %}
-                            <a href="{{ url_for('cancelar_reserva', reserva_id=reserva.id) }}" 
-                               onclick="return confirm('Tem certeza que deseja cancelar esta reserva?')"
-                               style="color: #dc3545;">Cancelar</a>
-                        {% else %}
-                            <span style="color: #999;">-</span>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <p style="margin-top: 20px; color: #999;">
-            Você ainda não fez nenhuma reserva. 
-            <a href="{{ url_for('listar_quadras') }}" class="link">Buscar quadras disponíveis</a>
+        <p class="text-sm text-gray-600 mb-4">
+            Total: <strong class="text-gray-800">{{ reservas|length }}</strong> reserva(s)
         </p>
+        
+        <div class="bg-white rounded-lg shadow overflow-hidden border border-gray-200">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gradient-to-r from-blue-600 to-blue-700">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Quadra</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Data</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Horário</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for reserva in reservas %}
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-6 py-4">
+                                <div class="text-sm font-medium text-gray-900">{{ reserva.quadra.nome }}</div>
+                                <div class="text-xs text-gray-500">{{ reserva.quadra.endereco }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {{ reserva.data.strftime('%d/%m/%Y') }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900 font-medium">
+                                    {{ reserva.hora_inicio.strftime('%H:%M') }} - {{ reserva.hora_fim.strftime('%H:%M') }}
+                                </div>
+                                <div class="text-xs text-gray-500">1 hora</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {% if reserva.status == 'ativa' %}
+                                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                        ✓ Ativa
+                                    </span>
+                                {% elif reserva.status == 'cancelada' %}
+                                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                        ✗ Cancelada
+                                    </span>
+                                {% else %}
+                                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                        ● Concluída
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                {% if reserva.status == 'ativa' %}
+                                    <a href="{{ url_for('cancelar_reserva', reserva_id=reserva.id) }}"
+                                       onclick="return confirm('Tem certeza que deseja cancelar esta reserva?')"
+                                       class="inline-flex items-center px-3 py-1 bg-red-100 hover:bg-red-200 text-red-700 font-medium rounded-lg transition">
+                                        Cancelar
+                                    </a>
+                                {% else %}
+                                    <span class="text-gray-400">-</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% else %}
+        <div class="text-center py-16 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg border-2 border-dashed border-gray-300">
+            <svg class="mx-auto h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            <p class="mt-4 text-lg text-gray-600 font-medium">Você ainda não fez nenhuma reserva</p>
+            <p class="mt-2 text-sm text-gray-500">Encontre quadras disponíveis e reserve agora!</p>
+            <a href="{{ url_for('listar_quadras') }}" 
+               class="inline-block mt-6 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition duration-200">
+                Buscar Quadras
+            </a>
+        </div>
     {% endif %}
 {% endblock %}

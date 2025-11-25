@@ -3,50 +3,79 @@
 {% block title %}Gerenciar Horários - {{ quadra.nome }}{% endblock %}
 
 {% block content %}
-    <h2>Gerenciar Horários: {{ quadra.nome }}</h2>
+    <div class="mb-6">
+        <a href="{{ url_for('minhas_quadras') }}" class="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium">
+            <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+            Voltar para Minhas Quadras
+        </a>
+    </div>
+
+    <h2 class="text-3xl font-bold text-gray-800 mb-2">Gerenciar Horários</h2>
+    <p class="text-lg text-gray-600 mb-6">{{ quadra.nome }}</p>
     
-    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-        <p><strong>Horários de funcionamento:</strong> 06:00 - 23:00 (17 horários disponíveis por dia)</p>
-        <p><strong>Duração de cada reserva:</strong> 1 hora</p>
+    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div>
+                <p class="font-medium text-gray-700 mb-1">⏰ Horários de funcionamento</p>
+                <p class="text-gray-600">06:00 - 23:00 (17 horários disponíveis por dia)</p>
+            </div>
+            <div>
+                <p class="font-medium text-gray-700 mb-1">⏱️ Duração de cada reserva</p>
+                <p class="text-gray-600">1 hora</p>
+            </div>
+        </div>
     </div>
     
-    <h3 style="margin-top: 30px;">Próximos 7 Dias</h3>
+    <h3 class="text-2xl font-bold text-gray-800 mb-4">Próximos 7 Dias</h3>
     
-    <div style="display: grid; gap: 15px; margin-top: 20px;">
+    <div class="space-y-4">
         {% for dia in estatisticas %}
         {% set percentual = (dia.reservas / 17 * 100)|int %}
         {% if percentual < 50 %}
-            {% set cor_class = 'baixa' %}
+            {% set cor_bg = 'bg-green-100' %}
+            {% set cor_text = 'text-green-800' %}
+            {% set cor_barra = 'bg-green-500' %}
         {% elif percentual < 80 %}
-            {% set cor_class = 'media' %}
+            {% set cor_bg = 'bg-yellow-100' %}
+            {% set cor_text = 'text-yellow-800' %}
+            {% set cor_barra = 'bg-yellow-500' %}
         {% else %}
-            {% set cor_class = 'alta' %}
+            {% set cor_bg = 'bg-red-100' %}
+            {% set cor_text = 'text-red-800' %}
+            {% set cor_barra = 'bg-red-500' %}
         {% endif %}
         
-        <div class="card" style="padding: 15px;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div style="flex: 1;">
-                    <h4 style="margin: 0;">{{ dia.data.strftime('%d/%m/%Y - %A') }}</h4>
-                    <p style="margin: 5px 0 0 0; color: #666;">
-                        {{ dia.reservas }} reserva(s) | {{ dia.disponivel }} horário(s) disponível(is)
+        <div class="bg-white rounded-lg shadow-md border border-gray-200 p-6 hover:shadow-lg transition-shadow">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div class="flex-1">
+                    <h4 class="text-lg font-bold text-gray-800 mb-2">
+                        {{ dia.data.strftime('%d/%m/%Y - %A') }}
+                    </h4>
+                    <p class="text-sm text-gray-600">
+                        <span class="font-medium">{{ dia.reservas }}</span> reserva(s) • 
+                        <span class="font-medium">{{ dia.disponivel }}</span> horário(s) disponível(is)
                     </p>
                 </div>
-                <div style="text-align: right;">
-                    <div class="progress-bar">
-                        <div class="progress-fill {{ cor_class }}" style='width: {{ percentual }}%;'></div>
+                <div class="flex items-center gap-4">
+                    <div class="w-32">
+                        <div class="h-4 bg-gray-200 rounded-full overflow-hidden">
+                            <div class="{{ cor_barra }} h-full transition-all duration-500" style='width: {{ percentual }}%;'></div>
+                        </div>
                     </div>
-                    <small style="color: #666;">{{ percentual }}% ocupado</small>
+                    <span class="inline-block px-3 py-1 {{ cor_bg }} {{ cor_text }} rounded-full text-sm font-medium min-w-[80px] text-center">
+                        {{ percentual }}% ocupado
+                    </span>
                 </div>
             </div>
         </div>
         {% endfor %}
     </div>
     
-    <div style="background: #d1ecf1; padding: 15px; border-radius: 8px; margin-top: 30px; color: #0c5460;">
-        <strong>💡 Dica:</strong> Você pode ver todas as reservas detalhadas clicando em "Ver Reservas" na sua quadra.
+    <div class="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <p class="text-sm text-blue-800">
+            <strong>💡 Dica:</strong> Você pode ver todas as reservas detalhadas clicando em "Ver Reservas" na sua quadra.
+        </p>
     </div>
-    
-    <p style="margin-top: 20px;">
-        <a href="{{ url_for('minhas_quadras') }}" class="link">← Voltar para Minhas Quadras</a>
-    </p>
 {% endblock %}

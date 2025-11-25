@@ -3,20 +3,52 @@
 {% block title %}Meu Perfil{% endblock %}
 
 {% block content %}
-    <h2>Gerenciar Perfil</h2>
-    
-    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 20px;">
-        <h3 style="margin-bottom: 15px;">Informações do Perfil</h3>
+    <div class="max-w-3xl mx-auto">
+        <h2 class="text-3xl font-bold text-gray-800 mb-8">Meu Perfil</h2>
         
-        <p><strong>Nome:</strong> {{ usuario.nome }}</p>
-        <p><strong>Email:</strong> {{ usuario.email }}</p>
-        <p><strong>ID:</strong> {{ usuario.id }}</p>
-    </div>
-    
-    <div style="margin-top: 30px;">
-        <a href="{{ url_for('editar_perfil') }}" style="background: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;">
-            Editar Perfil
-        </a>
-        <a href="{{ url_for('dashboard') }}" class="link" style="margin-left: 15px;">Voltar ao Dashboard</a>
+        <div class="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-8 mb-6">
+            <div class="flex items-center mb-6">
+                <div class="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center text-white text-3xl font-bold">
+                    {{ current_user.nome[0].upper() }}
+                </div>
+                <div class="ml-6">
+                    <h3 class="text-2xl font-bold text-gray-800">{{ current_user.nome }}</h3>
+                    <p class="text-gray-600">{{ current_user.email }}</p>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                <div class="bg-white rounded-lg p-4 shadow-sm">
+                    <p class="text-sm text-gray-600 mb-1">Tipo de Conta</p>
+                    {% if current_user.is_admin() %}
+                        <p class="text-lg font-bold text-red-600">👑 Administrador</p>
+                    {% elif current_user.is_dono_quadra() %}
+                        <p class="text-lg font-bold text-green-600">⚽ Dono de Quadra</p>
+                    {% else %}
+                        <p class="text-lg font-bold text-gray-800">👤 Usuário</p>
+                    {% endif %}
+                </div>
+                
+                <div class="bg-white rounded-lg p-4 shadow-sm">
+                    <p class="text-sm text-gray-600 mb-1">Status</p>
+                    {% if current_user.esta_bloqueado() %}
+                        <p class="text-lg font-bold text-red-600">🔒 Bloqueado</p>
+                    {% else %}
+                        <p class="text-lg font-bold text-green-600">✓ Ativo</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="flex gap-3">
+            <a href="{{ url_for('editar_perfil') }}" 
+               class="flex-1 text-center bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition duration-200">
+                Editar Perfil
+            </a>
+            <a href="{{ url_for('dashboard') }}" 
+               class="flex-1 text-center bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-3 px-6 rounded-lg transition duration-200">
+                Voltar ao Dashboard
+            </a>
+        </div>
     </div>
 {% endblock %}

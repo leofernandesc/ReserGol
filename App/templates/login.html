@@ -1,32 +1,47 @@
 {% extends "base.html" %}
 
-{% block title %}Login{% endblock %}
+{% block title %}Login - ReserGol{% endblock %}
 
 {% block content %}
-    <h2>Login</h2>
-    <form method="POST">
-        <div class="form-group">
-            <label for="email">Email:</label>
-            <input type="email" id="email" name="email" required>
-        </div>
+    <div class="max-w-md mx-auto">
+        <h2 class="text-3xl font-bold text-gray-800 mb-2 text-center">Bem-vindo de volta!</h2>
+        <p class="text-gray-600 mb-8 text-center">Faça login para continuar</p>
+
+        <form method="POST" class="space-y-5">
+            <div>
+                <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                <input type="email" id="email" name="email" required
+                       class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+            </div>
+            
+            <div>
+                <label for="senha" class="block text-sm font-medium text-gray-700 mb-2">Senha</label>
+                <input type="password" id="senha" name="senha" required
+                       class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+            </div>
+            
+            <div class="flex items-center justify-between">
+                <label class="inline-flex items-center">
+                    <input type="checkbox" id="lembrar" name="lembrar"
+                           class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                    <span class="ml-2 text-sm text-gray-700">Lembrar de mim</span>
+                </label>
+                <a href="{{ url_for('esqueci_senha') }}" class="text-sm text-blue-600 hover:text-blue-700 font-medium">
+                    Esqueceu a senha?
+                </a>
+            </div>
+            
+            <button type="submit"
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300">
+                Entrar
+            </button>
+        </form>
         
-        <div class="form-group">
-            <label for="senha">Senha:</label>
-            <input type="password" id="senha" name="senha" required>
-        </div>
-        
-        <div class="form-group">
-            <input type="checkbox" id="lembrar" name="lembrar">
-            <label for="lembrar" style="display: inline;">Lembrar de mim</label>
-        </div>
-        
-        <button type="submit">Entrar</button>
-    </form>
-    
-    <p style="margin-top: 15px;">
-        Não tem uma conta? <a href="{{ url_for('registro') }}" class="link">Registre-se aqui</a>
-    </p>
-    <p>
-        <a href="{{ url_for('esqueci_senha') }}" class="link">Esqueceu sua senha?</a>
-    </p>
+        <p class="mt-6 text-center text-sm text-gray-600">
+            Não tem uma conta?
+            <a href="{{ url_for('registro') }}" class="text-blue-600 hover:text-blue-700 font-medium">
+                Registre-se aqui
+            </a>
+        </p>
+    </div>
 {% endblock %}

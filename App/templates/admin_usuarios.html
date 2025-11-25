@@ -3,20 +3,28 @@
 {% block title %}Gerenciar Usuários - Admin{% endblock %}
 
 {% block content %}
-    <h2>Gerenciar Usuários</h2>
+    <h2 class="text-3xl font-bold text-gray-800 mb-6">Gerenciar Usuários</h2>
     
-    <!-- Formulário de Busca -->
-    <form method="GET" style="margin-bottom: 20px;">
-        <div style="display: flex; gap: 10px;">
-            <input type="text" 
-                   name="busca" 
-                   placeholder="Buscar por nome ou email..." 
-                   value="{{ busca }}"
-                   style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
-            <button type="submit" style="width: auto; padding: 10px 20px;">Buscar</button>
+    <!-- Busca -->
+    <form method="GET" class="mb-6">
+        <div class="flex gap-3">
+            <div class="flex-1 relative">
+                <input type="text" 
+                       name="busca" 
+                       placeholder="Buscar por nome ou email..." 
+                       value="{{ busca }}"
+                       class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-resergol-500 focus:border-resergol-500">
+                <svg class="absolute left-3 top-3.5 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+            </div>
+            <button type="submit" 
+                    class="px-6 py-3 bg-resergol-600 hover:bg-resergol-700 text-white font-medium rounded-lg transition duration-200">
+                Buscar
+            </button>
             {% if busca %}
                 <a href="{{ url_for('admin_usuarios') }}" 
-                   style="background: #6c757d; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;">
+                   class="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-lg transition duration-200">
                     Limpar
                 </a>
             {% endif %}
@@ -24,99 +32,191 @@
     </form>
     
     {% if usuarios %}
-        <p style="color: #666; margin-bottom: 15px;">
-            Total: <strong>{{ usuarios|length }}</strong> usuário(s)
-        </p>
+        <div class="mb-4 flex items-center justify-between">
+            <p class="text-sm text-gray-600">
+                Total: <strong class="text-gray-800 text-base">{{ usuarios|length }}</strong> usuário(s)
+            </p>
+        </div>
         
-        <div style="overflow-x: auto;">
-            <table style="width: 100%; border-collapse: collapse;">
-                <thead>
-                    <tr style="background: #007bff; color: white;">
-                        <th style="padding: 10px; border: 1px solid #ddd;">ID</th>
-                        <th style="padding: 10px; border: 1px solid #ddd;">Nome</th>
-                        <th style="padding: 10px; border: 1px solid #ddd;">Email</th>
-                        <th style="padding: 10px; border: 1px solid #ddd;">Role</th>
-                        <th style="padding: 10px; border: 1px solid #ddd;">Status</th>
-                        <th style="padding: 10px; border: 1px solid #ddd;">Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for usuario in usuarios %}
-                    <tr {% if usuario.esta_bloqueado() %}style="background: #ffe0e0;"{% endif %}>
-                        <td style="padding: 10px; border: 1px solid #ddd;">{{ usuario.id }}</td>
-                        <td style="padding: 10px; border: 1px solid #ddd;">{{ usuario.nome }}</td>
-                        <td style="padding: 10px; border: 1px solid #ddd;">{{ usuario.email }}</td>
-                        <td style="padding: 10px; border: 1px solid #ddd;">
-                            {% if usuario.role == 'admin' %}
-                                <span style="background: #dc3545; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">Admin</span>
-                            {% elif usuario.role == 'dono_quadra' %}
-                                <span style="background: #28a745; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">Dono de Quadra</span>
-                            {% else %}
-                                <span style="background: #6c757d; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">Usuário</span>
-                            {% endif %}
-                        </td>
-                        <td style="padding: 10px; border: 1px solid #ddd;">
-                            {% if usuario.esta_bloqueado() %}
-                                <span style="color: #dc3545; font-weight: bold;">🔒 Bloqueado</span>
-                            {% else %}
-                                <span style="color: #28a745;">✓ Ativo</span>
-                            {% endif %}
-                        </td>
-                        <td style="padding: 10px; border: 1px solid #ddd;">
-                            <div style="display: flex; gap: 5px; flex-wrap: wrap;">
-                                <!-- Editar -->
-                                <a href="{{ url_for('admin_editar_usuario', usuario_id=usuario.id) }}" 
-                                style="background: #007bff; color: white; padding: 5px 10px; text-decoration: none; border-radius: 4px; font-size: 12px;">
-                                    ✏️ Editar
-                                </a>
-                                
-                                <!-- Promover/Rebaixar -->
-                                {% if usuario.role != 'admin' %}
-                                    {% if usuario.role == 'usuario' %}
-                                        <a href="{{ url_for('promover_usuario', usuario_id=usuario.id) }}" 
-                                        style="background: #28a745; color: white; padding: 5px 10px; text-decoration: none; border-radius: 4px; font-size: 12px;">
-                                            ⬆️ Promover
-                                        </a>
-                                    {% else %}
-                                        <a href="{{ url_for('rebaixar_usuario', usuario_id=usuario.id) }}" 
-                                        style="background: #ffc107; color: white; padding: 5px 10px; text-decoration: none; border-radius: 4px; font-size: 12px;">
-                                            ⬇️ Rebaixar
-                                        </a>
-                                    {% endif %}
+        <div class="bg-white rounded-lg shadow overflow-hidden border border-gray-200">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gradient-to-r from-resergol-600 to-resergol-700">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">ID</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Nome</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Email</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Role</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for usuario in usuarios %}
+                        <tr class="hover:bg-gray-50 transition-colors {% if usuario.esta_bloqueado() %}bg-red-50{% endif %}">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                #{{ usuario.id }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                {{ usuario.nome }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                {{ usuario.email }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {% if usuario.role == 'admin' %}
+                                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                        👑 Admin
+                                    </span>
+                                {% elif usuario.role == 'dono_quadra' %}
+                                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                        ⚽ Dono de Quadra
+                                    </span>
+                                {% else %}
+                                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                        👤 Usuário
+                                    </span>
                                 {% endif %}
-                                
-                                <!-- Bloquear/Desbloquear -->
-                                {% if usuario.role != 'admin' and usuario.id != current_user.id %}
-                                    {% if usuario.esta_bloqueado() %}
-                                        <a href="{{ url_for('admin_desbloquear_usuario', usuario_id=usuario.id) }}" 
-                                        style="background: #17a2b8; color: white; padding: 5px 10px; text-decoration: none; border-radius: 4px; font-size: 12px;">
-                                            🔓 Desbloquear
-                                        </a>
-                                    {% else %}
-                                        <a href="{{ url_for('admin_bloquear_usuario', usuario_id=usuario.id) }}" 
-                                        onclick="return confirm('Tem certeza que deseja bloquear {{ usuario.nome }} por 24 horas?')"
-                                        style="background: #fd7e14; color: white; padding: 5px 10px; text-decoration: none; border-radius: 4px; font-size: 12px;">
-                                            🔒 Bloquear
-                                        </a>
-                                    {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {% if usuario.esta_bloqueado() %}
+                                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                        🔒 Bloqueado
+                                    </span>
+                                {% else %}
+                                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                        ✓ Ativo
+                                    </span>
                                 {% endif %}
-                                
-                                <!-- Remover -->
-                                {% if usuario.role != 'admin' and usuario.id != current_user.id %}
-                                    <a href="{{ url_for('admin_remover_usuario', usuario_id=usuario.id) }}" 
-                                    onclick="return confirm('Tem certeza que deseja remover {{ usuario.nome }}? Esta ação não pode ser desfeita!')" 
-                                    style="background: #dc3545; color: white; padding: 5px 10px; text-decoration: none; border-radius: 4px; font-size: 12px;">
-                                        🗑️ Remover
-                                    </a>
-                                {% endif %}
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm relative">
+                                <!-- Dropdown de Ações -->
+                                <div class="relative inline-block text-left">
+                                    <button onclick="toggleDropdown({{ usuario.id }})" 
+                                            type="button" 
+                                            class="inline-flex items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-resergol-500">
+                                        Ações
+                                        <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                        </svg>
+                                    </button>
+
+                                    <!-- Dropdown Menu -->
+                                    <div id="dropdown-{{ usuario.id }}" 
+                                         class="hidden absolute right-0 mt-2 w-56 rounded-lg shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
+                                        <div class="py-1">
+                                            <!-- Editar -->
+                                            <a href="{{ url_for('admin_editar_usuario', usuario_id=usuario.id) }}" 
+                                               class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition">
+                                                <svg class="w-4 h-4 mr-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                                </svg>
+                                                Editar Usuário
+                                            </a>
+                                            
+                                            <!-- Promover/Rebaixar -->
+                                            {% if usuario.role != 'admin' %}
+                                                {% if usuario.role == 'usuario' %}
+                                                    <a href="{{ url_for('promover_usuario', usuario_id=usuario.id) }}" 
+                                                       class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition">
+                                                        <svg class="w-4 h-4 mr-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+                                                        </svg>
+                                                        Promover para Dono
+                                                    </a>
+                                                {% else %}
+                                                    <a href="{{ url_for('rebaixar_usuario', usuario_id=usuario.id) }}" 
+                                                       class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition">
+                                                        <svg class="w-4 h-4 mr-3 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                                                        </svg>
+                                                        Rebaixar para Usuário
+                                                    </a>
+                                                {% endif %}
+                                            {% endif %}
+                                            
+                                            <!-- Bloquear/Desbloquear -->
+                                            {% if usuario.role != 'admin' and usuario.id != current_user.id %}
+                                                <div class="border-t border-gray-100"></div>
+                                                {% if usuario.esta_bloqueado() %}
+                                                    <a href="{{ url_for('admin_desbloquear_usuario', usuario_id=usuario.id) }}" 
+                                                       class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition">
+                                                        <svg class="w-4 h-4 mr-3 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path>
+                                                        </svg>
+                                                        Desbloquear Usuário
+                                                    </a>
+                                                {% else %}
+                                                    <a href="{{ url_for('admin_bloquear_usuario', usuario_id=usuario.id) }}" 
+                                                       onclick="return confirm('Tem certeza que deseja bloquear {{ usuario.nome }} por 24 horas?')"
+                                                       class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition">
+                                                        <svg class="w-4 h-4 mr-3 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                                                        </svg>
+                                                        Bloquear Usuário (24h)
+                                                    </a>
+                                                {% endif %}
+                                            {% endif %}
+                                            
+                                            <!-- Remover -->
+                                            {% if usuario.role != 'admin' and usuario.id != current_user.id %}
+                                                <div class="border-t border-gray-100"></div>
+                                                <a href="{{ url_for('admin_remover_usuario', usuario_id=usuario.id) }}" 
+                                                   onclick="return confirm('Tem certeza que deseja remover {{ usuario.nome }}? Esta ação não pode ser desfeita!')" 
+                                                   class="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition">
+                                                    <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                                    </svg>
+                                                    Remover Usuário
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     {% else %}
-        <p style="margin-top: 20px; color: #999;">Nenhum usuário encontrado.</p>
+        <div class="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+            </svg>
+            <p class="mt-4 text-gray-500">Nenhum usuário encontrado.</p>
+        </div>
     {% endif %}
+    
+    <!-- JavaScript para controlar o dropdown -->
+    <script>
+        let currentOpenDropdown = null;
+
+        function toggleDropdown(userId) {
+            const dropdown = document.getElementById('dropdown-' + userId);
+            
+            // Fecha o dropdown anterior se houver um aberto
+            if (currentOpenDropdown && currentOpenDropdown !== dropdown) {
+                currentOpenDropdown.classList.add('hidden');
+            }
+            
+            // Toggle do dropdown atual
+            dropdown.classList.toggle('hidden');
+            
+            // Atualiza o dropdown atual
+            currentOpenDropdown = dropdown.classList.contains('hidden') ? null : dropdown;
+        }
+
+        // Fecha dropdown ao clicar fora
+        document.addEventListener('click', function(event) {
+            const isDropdownButton = event.target.closest('button');
+            const isDropdownMenu = event.target.closest('[id^="dropdown-"]');
+            
+            if (!isDropdownButton && !isDropdownMenu && currentOpenDropdown) {
+                currentOpenDropdown.classList.add('hidden');
+                currentOpenDropdown = null;
+            }
+        });
+    </script>
 {% endblock %}

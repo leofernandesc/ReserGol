@@ -1,141 +1,195 @@
-<!DOCTYPE html>
+<!DOCTYPE HTML>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Sistema de Login{% endblock %}</title>
+    <title>{% block title %}ReserGol{% endblock %}</title>
+    
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Configuração customizada das cores do ReserGol -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'resergol': {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            200: '#bbf7d0',
+                            300: '#86efac',
+                            400: '#4ade80',
+                            500: '#22c55e',  // Verde principal
+                            600: '#16a34a',  // Verde escuro
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; background: #f4f4f4; }
-        .container { max-width: 500px; margin: 50px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        h1, h2 { color: #333; margin-bottom: 20px; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; color: #555; }
-        input[type="text"], input[type="email"], input[type="password"] { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
-        button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; width: 100%; }
-        button:hover { background: #0056b3; }
-        .alert { padding: 10px; margin-bottom: 20px; border-radius: 4px; }
-        .alert-success { background: #d4edda; color: #155724; }
-        .alert-danger { background: #f8d7da; color: #721c24; }
-        .alert-warning { background: #fff3cd; color: #856404; }
-        .alert-info { background: #d1ecf1; color: #0c5460; }
-        .nav { background: #333; padding: 15px; margin-bottom: 30px; }
-        .nav a { color: white; text-decoration: none; margin-right: 15px; }
-        .nav a:hover { text-decoration: underline; }
-        .link { color: #007bff; text-decoration: none; }
-        .link:hover { text-decoration: underline; }
-        .logo-canto-direito {
-            position: fixed;
-            top: 15px;
-            right: 20px;
-            z-index: 9999;
-        }       
-        .logo-canto-direito img {
-        height: 60px; 
-        width: auto;
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
-        .card {
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            transition: box-shadow 0.3s;
-        }
-
-        .card:hover {
-            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-        }
-
-        select.form-control {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-
-        select.form-control option:disabled {
-        color: #999;
-        background: #f5f5f5;
-        }  
         
-        textarea {
-            font-family: Arial, sans-serif;
-            resize: vertical;
-        }
-
-        /* Barras de progresso */
-        .progress-bar {
-            width: 100px;
-            height: 20px;
-            background: #e9ecef;
-            border-radius: 10px;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .progress-fill {
-            height: 100%;
-            transition: width 0.3s ease;
-        }
-
-        .progress-fill.baixa {
-            background: #28a745; /* Verde - menos de 50% */
-        }
-
-        .progress-fill.media {
-            background: #ffc107; /* Amarelo - 50-80% */
-        }
-
-        .progress-fill.alta {
-            background: #dc3545; /* Vermelho - mais de 80% */
+        .flash-message {
+            animation: slideIn 0.3s ease-out;
         }
     </style>
 </head>
-<body>
-    <div class="logo-canto-direito">
-        <img src="{{ url_for('static', filename='resergolLogo1.png') }}" alt="Logo ReserGol">
-    </div>
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+    <!-- Navbar com identidade ReserGol -->
+    <nav class="bg-gradient-to-r from-resergol-600 to-resergol-700 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo ReserGol com SVG -->
+                <div class="flex items-center space-x-4">
+                    <a href="{{ url_for('index') }}" class="flex items-center space-x-3 hover:opacity-90 transition">
+                        <!-- Ícone SVG do Pin com Bola -->
+                        <svg class="h-10 w-10 text-white" viewBox="0 0 24 24" fill="currentColor">
+                            <!-- Pin de Localização -->
+                            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                            <!-- Bola de Futebol (simplificada) -->
+                            <circle cx="12" cy="9" r="3" fill="#15803d"/>
+                            <path d="M12 7l0.5 1.5h1.5l-1.2 0.9 0.5 1.5-1.3-0.9-1.3 0.9 0.5-1.5-1.2-0.9h1.5z" fill="white" opacity="0.8"/>
+                        </svg>
+                        <!-- Texto ReserGol -->
+                        <span class="text-white font-bold text-2xl tracking-tight">RESERGOL</span>
+                    </a>
+                    
+                    {% if current_user.is_authenticated %}
+                        <div class="hidden md:flex items-center space-x-1 ml-8">
+                            <a href="{{ url_for('listar_quadras') }}" class="text-white hover:bg-resergol-500 px-3 py-2 rounded-md text-sm font-medium transition">
+                                Quadras
+                            </a>
+                            <a href="{{ url_for('minhas_reservas') }}" class="text-white hover:bg-resergol-500 px-3 py-2 rounded-md text-sm font-medium transition">
+                                Minhas Reservas
+                            </a>
+                            <a href="{{ url_for('dashboard') }}" class="text-white hover:bg-resergol-500 px-3 py-2 rounded-md text-sm font-medium transition">
+                                Dashboard
+                            </a>
+                            
+                            {% if current_user.is_dono_quadra() %}
+                                <a href="{{ url_for('minhas_quadras') }}" class="text-white hover:bg-resergol-500 px-3 py-2 rounded-md text-sm font-medium transition">
+                                    Minhas Quadras
+                                </a>
+                            {% endif %}
+                            
+                            {% if current_user.is_admin() %}
+                                <a href="{{ url_for('admin_usuarios') }}" class="text-white hover:bg-resergol-500 px-3 py-2 rounded-md text-sm font-medium transition">
+                                    Admin
+                                </a>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="flex items-center space-x-2">
+                    {% if current_user.is_authenticated %}
+                        <a href="{{ url_for('perfil') }}" class="text-white hover:bg-resergol-500 px-3 py-2 rounded-md text-sm font-medium transition">
+                            👤 {{ current_user.nome.split()[0] }}
+                        </a>
+                        <a href="{{ url_for('logout') }}" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium transition">
+                            Sair
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('login') }}" class="text-white hover:bg-resergol-500 px-4 py-2 rounded-md text-sm font-medium transition">
+                            Login
+                        </a>
+                        <a href="{{ url_for('registro') }}" class="bg-white hover:bg-gray-100 text-resergol-700 px-4 py-2 rounded-md text-sm font-bold transition shadow-md">
+                            Registrar
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
 
-    <div class="nav">
-    <a href="{{ url_for('index') }}">Início</a>
-    
-    {% if current_user.is_authenticated %}
-        <a href="{{ url_for('listar_quadras') }}">Quadras</a>
-        <a href="{{ url_for('minhas_reservas') }}">Minhas Reservas</a>
-        <a href="{{ url_for('dashboard') }}">Dashboard</a>
-        <a href="{{ url_for('perfil') }}">Meu Perfil</a>
-        
-        <!-- Menu para Donos de Quadra -->
-        {% if current_user.is_dono_quadra() %}
-            <a href="{{ url_for('minhas_quadras') }}">Minhas Quadras</a>
-            <a href="{{ url_for('cadastrar_quadra') }}">Nova Quadra</a>
-        {% endif %}
-        
-        <!-- Menu para Admin -->
-        {% if current_user.is_admin() %}
-            <a href="{{ url_for('admin_usuarios') }}">Gerenciar Usuários</a>
-        {% endif %}
-        
-        <a href="{{ url_for('logout') }}">Sair</a>
-    {% else %}
-        <a href="{{ url_for('login') }}">Login</a>
-        <a href="{{ url_for('registro') }}">Registrar</a>
-    {% endif %}
-</div>
-
-
-
-    <div class="container">
+    <!-- Conteúdo principal -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Flash Messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}">{{ message }}</div>
-                {% endfor %}
+                <div class="space-y-3 mb-6">
+                    {% for category, message in messages %}
+                        {% if category == 'success' %}
+                            <div class="flash-message bg-green-50 border-l-4 border-resergol-500 p-4 rounded-r-lg shadow-sm">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 text-resergol-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                    </svg>
+                                    <p class="text-sm font-medium text-resergol-800">{{ message }}</p>
+                                </div>
+                            </div>
+                        {% elif category == 'danger' or category == 'error' %}
+                            <div class="flash-message bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg shadow-sm">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 text-red-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                                    </svg>
+                                    <p class="text-sm font-medium text-red-800">{{ message }}</p>
+                                </div>
+                            </div>
+                        {% elif category == 'warning' %}
+                            <div class="flash-message bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-r-lg shadow-sm">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 text-yellow-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                    </svg>
+                                    <p class="text-sm font-medium text-yellow-800">{{ message }}</p>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="flash-message bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg shadow-sm">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 text-blue-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                                    </svg>
+                                    <p class="text-sm font-medium text-blue-800">{{ message }}</p>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
             {% endif %}
         {% endwith %}
 
-        {% block content %}{% endblock %}
+        <!-- Conteúdo da Página -->
+        <div class="bg-white rounded-xl shadow-lg p-6 md:p-8">
+            {% block content %}{% endblock %}
+        </div>
     </div>
+    
+    <!-- Footer -->
+    <footer class="bg-gradient-to-r from-resergol-700 to-resergol-800 text-white mt-12">
+        <div class="max-w-7xl mx-auto px-4 py-6">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="flex items-center space-x-3 mb-4 md:mb-0">
+                    <!-- Ícone SVG no footer -->
+                    <svg class="h-8 w-8 text-white" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                        <circle cx="12" cy="9" r="3" fill="#15803d"/>
+                    </svg>
+                    <span class="font-bold text-lg">RESERGOL</span>
+                </div>
+                <p class="text-sm text-center">&copy; 2025 ReserGol - Sistema de Reserva de Quadras Esportivas</p>
+            </div>
+        </div>
+    </footer>
+    <!-- Alpine.js para componentes interativos -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </body>
 </html>
+
