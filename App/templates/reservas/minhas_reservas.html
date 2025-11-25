@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Minhas Reservas{% endblock %}
+
+{% block content %}
+    <h2>Minhas Reservas</h2>
+    
+    {% if reservas %}
+        <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+            <thead>
+                <tr style="background: #007bff; color: white;">
+                    <th style="padding: 10px; border: 1px solid #ddd;">Quadra</th>
+                    <th style="padding: 10px; border: 1px solid #ddd;">Data</th>
+                    <th style="padding: 10px; border: 1px solid #ddd;">Horário</th>
+                    <th style="padding: 10px; border: 1px solid #ddd;">Status</th>
+                    <th style="padding: 10px; border: 1px solid #ddd;">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for reserva in reservas %}
+                <tr>
+                    <td style="padding: 10px; border: 1px solid #ddd;">{{ reserva.quadra.nome }}</td>
+                    <td style="padding: 10px; border: 1px solid #ddd;">{{ reserva.data.strftime('%d/%m/%Y') }}</td>
+                    <td style="padding: 10px; border: 1px solid #ddd;">
+                        {{ reserva.hora_inicio.strftime('%H:%M') }} - {{ reserva.hora_fim.strftime('%H:%M') }}
+                    </td>
+                    <td style="padding: 10px; border: 1px solid #ddd;">
+                        {% if reserva.status == 'ativa' %}
+                            <span style="background: #28a745; color: white; padding: 4px 8px; border-radius: 4px;">Ativa</span>
+                        {% elif reserva.status == 'cancelada' %}
+                            <span style="background: #dc3545; color: white; padding: 4px 8px; border-radius: 4px;">Cancelada</span>
+                        {% else %}
+                            <span style="background: #6c757d; color: white; padding: 4px 8px; border-radius: 4px;">Concluída</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 10px; border: 1px solid #ddd;">
+                        {% if reserva.status == 'ativa' %}
+                            <a href="{{ url_for('cancelar_reserva', reserva_id=reserva.id) }}" 
+                               onclick="return confirm('Tem certeza que deseja cancelar esta reserva?')"
+                               style="color: #dc3545;">Cancelar</a>
+                        {% else %}
+                            <span style="color: #999;">-</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p style="margin-top: 20px; color: #999;">
+            Você ainda não fez nenhuma reserva. 
+            <a href="{{ url_for('listar_quadras') }}" class="link">Buscar quadras disponíveis</a>
+        </p>
+    {% endif %}
+{% endblock %}

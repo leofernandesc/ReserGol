@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Reservar Quadra{% endblock %}
+
+{% block content %}
+    <h2>Reservar: {{ quadra.nome }}</h2>
+    
+    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+        <p><strong>Tipo:</strong> {{ quadra.tipo|capitalize }}</p>
+        <p><strong>Endereço:</strong> {{ quadra.endereco }}</p>
+        <p><strong>Preço/Hora:</strong> R$ {{ "%.2f"|format(quadra.preco_hora) }}</p>
+        {% if quadra.descricao %}
+            <p><strong>Descrição:</strong> {{ quadra.descricao }}</p>
+        {% endif %}
+    </div>
+    
+    <form method="POST">
+        <div class="form-group">
+            <label for="data">Data da reserva:</label>
+            <input type="date" 
+                   id="data" 
+                   name="data" 
+                   value="{{ data_escolhida }}" 
+                   min="{{ data_escolhida }}"
+                   onchange="this.form.submit()"
+                   required>
+            <small style="color: #666;">Selecione uma data para ver os horários disponíveis</small>
+        </div>
+        
+        <div class="form-group">
+            <label for="hora">Horário disponível:</label>
+            <select id="hora" name="hora" class="form-control" required>
+                <option value="">Selecione um horário...</option>
+                {% for hora in horarios_possiveis %}
+                    {% if hora in horarios_reservados %}
+                        <option value="{{ hora }}" disabled style="color: #999;">
+                            {{ hora }} - INDISPONÍVEL
+                        </option>
+                    {% else %}
+                        <option value="{{ hora }}">
+                            {{ hora }} - Disponível
+                        </option>
+                    {% endif %}
+                {% endfor %}
+            </select>
+            <small style="color: #666;">Cada reserva tem duração de 1 hora</small>
+        </div>
+        
+        {% if horarios_reservados %}
+        <div style="background: #fff3cd; padding: 10px; border-radius: 4px; margin: 15px 0;">
+            <strong>ℹ️ Horários já reservados para esta data:</strong>
+            <ul style="margin: 5px 0; padding-left: 20px;">
+                {% for hora in horarios_reservados|sort %}
+                    <li>{{ hora }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        
+        <button type="submit">Confirmar Reserva</button>
+    </form>
+    
+    <p style="margin-top: 15px;">
+        <a href="{{ url_for('listar_quadras') }}" class="link">Voltar para Quadras</a>
+    </p>
+{% endblock %}

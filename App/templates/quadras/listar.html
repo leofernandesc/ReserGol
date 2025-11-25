@@ -23,7 +23,11 @@
                     Dono: {{ quadra.dono.nome }}
                 </p>
                 
-                <button style="margin-top: 15px; width: 100%;">Reservar</button>
+                <!-- Botão Reservar Único e Correto -->
+                <a href="{{ url_for('reservar_quadra', quadra_id=quadra.id) }}" 
+                   style="display: block; margin-top: 15px; width: 100%; padding: 10px; background: #007bff; color: white; text-decoration: none; border-radius: 4px; text-align: center;">
+                    Reservar
+                </a>
             </div>
             {% endfor %}
         </div>

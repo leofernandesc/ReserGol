@@ -1,9 +1,11 @@
-from flask import Flask, render_template  
-from flask_login import LoginManager
+from flask import Flask, render_template, redirect, url_for
+from flask_login import LoginManager, login_required
 from controllers.usuario_controller import UsuarioController
 from models.usuario_model import db, Usuario
-from models.quadra_model import Quadra  # ADICIONE ESTA LINHA
+from models.quadra_model import Quadra
 from flask_mail import Mail, Message
+from models.reserva_model import Reserva
+
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'sua-chave-secreta'
@@ -26,7 +28,7 @@ mail = Mail(app)
 def load_user(user_id):
     return Usuario.query.get(int(user_id))
 
-# Rotas existentes...
+# ===== ROTAS PÚBLICAS =====
 @app.route('/')
 def index():
     return render_template('index.html')  
@@ -39,6 +41,7 @@ def registro():
 def login():
     return UsuarioController.login()
 
+# ===== ROTAS AUTENTICADAS - USUÁRIO =====
 @app.route('/dashboard')
 def dashboard():
     return UsuarioController.dashboard()
@@ -67,7 +70,7 @@ def esqueci_senha():
 def resetar_senha(token):
     return UsuarioController.resetar_senha(token)
 
-# ROTAS - Gerenciamento de Usuários (Admin)
+# ===== ROTAS ADMIN =====
 @app.route('/admin/usuarios')
 def admin_usuarios():
     return UsuarioController.admin_listar_usuarios()
@@ -92,38 +95,62 @@ def admin_remover_usuario(usuario_id):
 def admin_desbloquear_usuario(usuario_id):
     return UsuarioController.admin_desbloquear_usuario(usuario_id)
 
+@app.route('/admin/bloquear-usuario/<int:usuario_id>')
+def admin_bloquear_usuario(usuario_id):
+    return UsuarioController.admin_bloquear_usuario(usuario_id)
 
-# NOVAS ROTAS - Quadras
+# ===== ROTAS QUADRAS =====
 @app.route('/quadras')
 def listar_quadras():
     from controllers.quadra_controller import QuadraController
     return QuadraController.listar_quadras()
 
 @app.route('/minhas-quadras')
+@login_required
 def minhas_quadras():
     from controllers.quadra_controller import QuadraController
     return QuadraController.minhas_quadras()
 
 @app.route('/cadastrar-quadra', methods=['GET', 'POST'])
+@login_required
 def cadastrar_quadra():
     from controllers.quadra_controller import QuadraController
     return QuadraController.cadastrar_quadra()
 
 @app.route('/editar-quadra/<int:quadra_id>', methods=['GET', 'POST'])
+@login_required
 def editar_quadra(quadra_id):
     from controllers.quadra_controller import QuadraController
     return QuadraController.editar_quadra(quadra_id)
 
 @app.route('/deletar-quadra/<int:quadra_id>')
+@login_required
 def deletar_quadra(quadra_id):
     from controllers.quadra_controller import QuadraController
     return QuadraController.deletar_quadra(quadra_id)
 
-@app.route('/admin/bloquear-usuario/<int:usuario_id>')
-def admin_bloquear_usuario(usuario_id):
-    return UsuarioController.admin_bloquear_usuario(usuario_id)
+# ===== ROTAS RESERVAS =====
+@app.route('/reservar/<int:quadra_id>', methods=['GET', 'POST'])
+@login_required
+def reservar_quadra(quadra_id):
+    from controllers.reserva_controller import ReservaController
+    return ReservaController.reservar(quadra_id)
+
+@app.route('/minhas-reservas')
+@login_required
+def minhas_reservas():
+    from controllers.reserva_controller import ReservaController
+    return ReservaController.minhas_reservas()
+
+@app.route('/cancelar-reserva/<int:reserva_id>')
+@login_required
+def cancelar_reserva(reserva_id):
+    from controllers.reserva_controller import ReservaController
+    return ReservaController.cancelar_reserva(reserva_id)
 
 
+
+# ===== INICIALIZAÇÃO =====
 with app.app_context():
     db.create_all()
     
