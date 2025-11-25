@@ -148,7 +148,24 @@ def cancelar_reserva(reserva_id):
     from controllers.reserva_controller import ReservaController
     return ReservaController.cancelar_reserva(reserva_id)
 
+# ROTAS - Gerenciamento de Quadras pelo Dono
+@app.route('/quadra/<int:quadra_id>/reservas')
+@login_required
+def ver_reservas_quadra(quadra_id):
+    from controllers.quadra_controller import QuadraController
+    return QuadraController.ver_reservas_quadra(quadra_id)
 
+@app.route('/quadra/<int:quadra_id>/horarios', methods=['GET', 'POST'])
+@login_required
+def gerenciar_horarios_quadra(quadra_id):
+    from controllers.quadra_controller import QuadraController
+    return QuadraController.gerenciar_horarios(quadra_id)
+
+@app.route('/reserva/<int:reserva_id>/cancelar-dono')
+@login_required
+def dono_cancelar_reserva(reserva_id):
+    from controllers.quadra_controller import QuadraController
+    return QuadraController.cancelar_reserva_dono(reserva_id)
 
 # ===== INICIALIZAÇÃO =====
 with app.app_context():

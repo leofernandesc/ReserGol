@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Quadra{% endblock %}
+
+{% block content %}
+    <h2>Editar Quadra</h2>
+    
+    <form method="POST">
+        <div class="form-group">
+            <label for="nome">Nome da Quadra:</label>
+            <input type="text" id="nome" name="nome" value="{{ quadra.nome }}" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="tipo">Tipo:</label>
+            <select id="tipo" name="tipo" class="form-control" required>
+                <option value="futebol" {% if quadra.tipo == 'futebol' %}selected{% endif %}>Futebol</option>
+                <option value="futsal" {% if quadra.tipo == 'futsal' %}selected{% endif %}>Futsal</option>
+                <option value="society" {% if quadra.tipo == 'society' %}selected{% endif %}>Society</option>
+                <option value="tenis" {% if quadra.tipo == 'tenis' %}selected{% endif %}>Tênis</option>
+                <option value="basquete" {% if quadra.tipo == 'basquete' %}selected{% endif %}>Basquete</option>
+                <option value="volei" {% if quadra.tipo == 'volei' %}selected{% endif %}>Vôlei</option>
+                <option value="beach_tennis" {% if quadra.tipo == 'beach_tennis' %}selected{% endif %}>Beach Tennis</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="endereco">Endereço Completo:</label>
+            <input type="text" id="endereco" name="endereco" value="{{ quadra.endereco }}" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="preco_hora">Preço por Hora (R$):</label>
+            <input type="number" id="preco_hora" name="preco_hora" step="0.01" value="{{ quadra.preco_hora }}" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="descricao">Descrição (opcional):</label>
+            <textarea id="descricao" name="descricao" rows="4" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">{{ quadra.descricao }}</textarea>
+        </div>
+        
+        <div style="background: #d1ecf1; padding: 10px; border-radius: 4px; margin: 15px 0; color: #0c5460;">
+            <strong>ℹ️ Informações:</strong>
+            <ul style="margin: 5px 0; padding-left: 20px;">
+                <li>ID da Quadra: {{ quadra.id }}</li>
+                <li>Status: {% if quadra.ativa %}Ativa{% else %}Inativa{% endif %}</li>
+                <li>Cadastrada em: {{ quadra.criado_em.strftime('%d/%m/%Y') if quadra.criado_em else 'Data não disponível' }}</li>
+            </ul>
+        </div>
+        
+        <button type="submit">Salvar Alterações</button>
+    </form>
+    
+    <p style="margin-top: 15px;">
+        <a href="{{ url_for('minhas_quadras') }}" class="link">Cancelar e voltar</a>
+    </p>
+{% endblock %}

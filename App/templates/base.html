@@ -57,8 +57,39 @@
         select.form-control option:disabled {
         color: #999;
         background: #f5f5f5;
-}
+        }  
+        
+        textarea {
+            font-family: Arial, sans-serif;
+            resize: vertical;
+        }
 
+        /* Barras de progresso */
+        .progress-bar {
+            width: 100px;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-fill.baixa {
+            background: #28a745; /* Verde - menos de 50% */
+        }
+
+        .progress-fill.media {
+            background: #ffc107; /* Amarelo - 50-80% */
+        }
+
+        .progress-fill.alta {
+            background: #dc3545; /* Vermelho - mais de 80% */
+        }
     </style>
 </head>
 <body>

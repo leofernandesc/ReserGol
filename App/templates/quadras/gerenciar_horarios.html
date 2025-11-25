@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Gerenciar Horários - {{ quadra.nome }}{% endblock %}
+
+{% block content %}
+    <h2>Gerenciar Horários: {{ quadra.nome }}</h2>
+    
+    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+        <p><strong>Horários de funcionamento:</strong> 06:00 - 23:00 (17 horários disponíveis por dia)</p>
+        <p><strong>Duração de cada reserva:</strong> 1 hora</p>
+    </div>
+    
+    <h3 style="margin-top: 30px;">Próximos 7 Dias</h3>
+    
+    <div style="display: grid; gap: 15px; margin-top: 20px;">
+        {% for dia in estatisticas %}
+        {% set percentual = (dia.reservas / 17 * 100)|int %}
+        {% if percentual < 50 %}
+            {% set cor_class = 'baixa' %}
+        {% elif percentual < 80 %}
+            {% set cor_class = 'media' %}
+        {% else %}
+            {% set cor_class = 'alta' %}
+        {% endif %}
+        
+        <div class="card" style="padding: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="flex: 1;">
+                    <h4 style="margin: 0;">{{ dia.data.strftime('%d/%m/%Y - %A') }}</h4>
+                    <p style="margin: 5px 0 0 0; color: #666;">
+                        {{ dia.reservas }} reserva(s) | {{ dia.disponivel }} horário(s) disponível(is)
+                    </p>
+                </div>
+                <div style="text-align: right;">
+                    <div class="progress-bar">
+                        <div class="progress-fill {{ cor_class }}" style='width: {{ percentual }}%;'></div>
+                    </div>
+                    <small style="color: #666;">{{ percentual }}% ocupado</small>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <div style="background: #d1ecf1; padding: 15px; border-radius: 8px; margin-top: 30px; color: #0c5460;">
+        <strong>💡 Dica:</strong> Você pode ver todas as reservas detalhadas clicando em "Ver Reservas" na sua quadra.
+    </div>
+    
+    <p style="margin-top: 20px;">
+        <a href="{{ url_for('minhas_quadras') }}" class="link">← Voltar para Minhas Quadras</a>
+    </p>
+{% endblock %}
