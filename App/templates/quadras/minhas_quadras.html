@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Minhas Quadras{% endblock %}
+
+{% block content %}
+    <h2>Minhas Quadras</h2>
+    
+    <a href="{{ url_for('cadastrar_quadra') }}" style="background: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block; margin-bottom: 20px;">
+        + Nova Quadra
+    </a>
+    
+    {% if quadras %}
+        <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+            <thead>
+                <tr style="background: #007bff; color: white;">
+                    <th style="padding: 10px; border: 1px solid #ddd;">Nome</th>
+                    <th style="padding: 10px; border: 1px solid #ddd;">Tipo</th>
+                    <th style="padding: 10px; border: 1px solid #ddd;">Endereço</th>
+                    <th style="padding: 10px; border: 1px solid #ddd;">Preço/Hora</th>
+                    <th style="padding: 10px; border: 1px solid #ddd;">Status</th>
+                    <th style="padding: 10px; border: 1px solid #ddd;">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for quadra in quadras %}
+                <tr>
+                    <td style="padding: 10px; border: 1px solid #ddd;">{{ quadra.nome }}</td>
+                    <td style="padding: 10px; border: 1px solid #ddd;">{{ quadra.tipo|capitalize }}</td>
+                    <td style="padding: 10px; border: 1px solid #ddd;">{{ quadra.endereco }}</td>
+                    <td style="padding: 10px; border: 1px solid #ddd;">R$ {{ "%.2f"|format(quadra.preco_hora) }}</td>
+                    <td style="padding: 10px; border: 1px solid #ddd;">
+                        {% if quadra.ativa %}
+                            <span style="background: #28a745; color: white; padding: 4px 8px; border-radius: 4px;">Ativa</span>
+                        {% else %}
+                            <span style="background: #dc3545; color: white; padding: 4px 8px; border-radius: 4px;">Inativa</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 10px; border: 1px solid #ddd;">
+                        <a href="{{ url_for('editar_quadra', quadra_id=quadra.id) }}" class="link">Editar</a>
+                        |
+                        <a href="{{ url_for('deletar_quadra', quadra_id=quadra.id) }}" 
+                           onclick="return confirm('Tem certeza que deseja deletar esta quadra?')" 
+                           style="color: #dc3545;">Deletar</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p style="margin-top: 20px; color: #999;">
+            Você ainda não cadastrou nenhuma quadra. 
+            <a href="{{ url_for('cadastrar_quadra') }}" class="link">Cadastre sua primeira quadra!</a>
+        </p>
+    {% endif %}
+{% endblock %}

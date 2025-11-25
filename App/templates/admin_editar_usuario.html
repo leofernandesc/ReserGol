@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Usuário - Admin{% endblock %}
+
+{% block content %}
+    <h2>Editar Usuário</h2>
+    
+    <form method="POST">
+        <div class="form-group">
+            <label for="nome">Nome Completo:</label>
+            <input type="text" id="nome" name="nome" value="{{ usuario.nome }}" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" value="{{ usuario.email }}" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="role">Tipo de Usuário:</label>
+            <select id="role" name="role" class="form-control" {% if usuario.id == current_user.id %}disabled{% endif %}>
+                <option value="usuario" {% if usuario.role == 'usuario' %}selected{% endif %}>Usuário Comum</option>
+                <option value="dono_quadra" {% if usuario.role == 'dono_quadra' %}selected{% endif %}>Dono de Quadra</option>
+                <option value="admin" {% if usuario.role == 'admin' %}selected{% endif %}>Administrador</option>
+            </select>
+            {% if usuario.id == current_user.id %}
+                <small style="color: #666;">Você não pode alterar seu próprio tipo de usuário.</small>
+            {% endif %}
+        </div>
+        
+        <div style="background: #fff3cd; padding: 10px; border-radius: 4px; margin: 15px 0;">
+            <strong>ℹ️ Informações Adicionais:</strong>
+            <ul style="margin: 10px 0; padding-left: 20px;">
+                <li>ID do Usuário: {{ usuario.id }}</li>
+                <li>Tentativas de Login: {{ usuario.tentativas_login }}</li>
+                <li>Status: {% if usuario.esta_bloqueado() %}<span style="color: #dc3545;">Bloqueado</span>{% else %}<span style="color: #28a745;">Ativo</span>{% endif %}</li>
+            </ul>
+        </div>
+        
+        <button type="submit">Salvar Alterações</button>
+    </form>
+    
+    <p style="margin-top: 15px;">
+        <a href="{{ url_for('admin_usuarios') }}" class="link">Cancelar e voltar</a>
+    </p>
+{% endblock %}

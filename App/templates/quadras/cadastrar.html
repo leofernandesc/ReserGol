@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Cadastrar Quadra{% endblock %}
+
+{% block content %}
+    <h2>Cadastrar Nova Quadra</h2>
+    <form method="POST">
+        <div class="form-group">
+            <label for="nome">Nome da Quadra:</label>
+            <input type="text" id="nome" name="nome" required>
+        </div>
+        <div class="form-group">
+            <label for="tipo">Tipo:</label>
+            <select id="tipo" name="tipo" required>
+                <option value="futebol">Futebol</option>
+                <option value="futsal">Futsal</option>
+                <option value="society">Society</option>
+                <option value="tenis">Tênis</option>
+                <option value="basquete">Basquete</option>
+                <option value="volei">Vôlei</option>
+                <option value="beach_tennis">Beach Tennis</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="endereco">Endereço Completo:</label>
+            <input type="text" id="endereco" name="endereco" required>
+        </div>
+        <div class="form-group">
+            <label for="preco_hora">Preço por Hora (R$):</label>
+            <input type="number" id="preco_hora" name="preco_hora" step="0.01" required>
+        </div>
+        <div class="form-group">
+            <label for="descricao">Descrição:</label>
+            <textarea id="descricao" name="descricao" rows="4"></textarea>
+        </div>
+        <button type="submit">Cadastrar Quadra</button>
+    </form>
+    <p style="margin-top: 15px;">
+        <a href="{{ url_for('minhas_quadras') }}" class="link">Voltar para Minhas Quadras</a>
+    </p>
+{% endblock %}
