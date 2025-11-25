@@ -119,6 +119,11 @@ def deletar_quadra(quadra_id):
     from controllers.quadra_controller import QuadraController
     return QuadraController.deletar_quadra(quadra_id)
 
+@app.route('/admin/bloquear-usuario/<int:usuario_id>')
+def admin_bloquear_usuario(usuario_id):
+    return UsuarioController.admin_bloquear_usuario(usuario_id)
+
+
 with app.app_context():
     db.create_all()
     

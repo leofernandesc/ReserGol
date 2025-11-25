@@ -451,3 +451,36 @@ class UsuarioController:
         db.session.commit()
         flash(f'Usuário {usuario.nome} foi desbloqueado!', 'success')
         return redirect(url_for('admin_usuarios'))
+    
+    @login_required
+    def admin_bloquear_usuario(usuario_id):
+        """Admin bloqueia um usuário manualmente"""
+        if not current_user.is_admin():
+            flash('Acesso negado!', 'danger')
+            return redirect(url_for('dashboard'))
+        
+        usuario = Usuario.query.get_or_404(usuario_id)
+        
+        # Não permite bloquear a si mesmo
+        if usuario.id == current_user.id:
+            flash('Você não pode bloquear sua própria conta!', 'warning')
+            return redirect(url_for('admin_usuarios'))
+        
+        # Não permite bloquear outro admin
+        if usuario.role == 'admin':
+            flash('Não é possível bloquear outro administrador!', 'warning')
+            return redirect(url_for('admin_usuarios'))
+        
+        # Verifica se já está bloqueado
+        if usuario.esta_bloqueado():
+            flash(f'Usuário {usuario.nome} já está bloqueado!', 'warning')
+            return redirect(url_for('admin_usuarios'))
+        
+        # Bloqueia por 24 horas (você pode personalizar o tempo)
+        from datetime import datetime, timedelta
+        usuario.bloqueado_ate = datetime.utcnow() + timedelta(hours=24)
+        usuario.tentativas_login = 5  # Marca como se tivesse excedido tentativas
+        db.session.commit()
+        
+        flash(f'Usuário {usuario.nome} foi bloqueado por 24 horas!', 'success')
+        return redirect(url_for('admin_usuarios'))
