@@ -99,7 +99,7 @@
                 <div class="flex items-center space-x-2">
                     {% if current_user.is_authenticated %}
                         <a href="{{ url_for('perfil') }}" class="text-white hover:bg-resergol-500 px-3 py-2 rounded-md text-sm font-medium transition">
-                            👤 {{ current_user.nome.split()[0] }}
+                             {{ current_user.nome.split()[0] }}
                         </a>
                         <a href="{{ url_for('logout') }}" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium transition">
                             Sair

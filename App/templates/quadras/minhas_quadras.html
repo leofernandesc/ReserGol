@@ -57,18 +57,18 @@
                     
                     <div class="flex flex-wrap gap-2">
                         <a href="{{ url_for('ver_reservas_quadra', quadra_id=quadra.id) }}" 
-                           class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition duration-200">
-                            📅 Ver Reservas
+                           class="inline-flex items-center px-4 py-2 bg-resergol-600 hover:bg-resergol-700 text-white text-sm font-medium rounded-lg transition duration-200">
+                            Ver Reservas
                         </a>
                         
                         <a href="{{ url_for('gerenciar_horarios_quadra', quadra_id=quadra.id) }}" 
                            class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition duration-200">
-                            🕐 Gerenciar Horários
+                            Gerenciar Horários
                         </a>
                         
                         <a href="{{ url_for('editar_quadra', quadra_id=quadra.id) }}" 
                            class="inline-flex items-center px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white text-sm font-medium rounded-lg transition duration-200">
-                            ✏️ Editar
+                            Editar
                         </a>
                         
                         <a href="{{ url_for('deletar_quadra', quadra_id=quadra.id) }}" 

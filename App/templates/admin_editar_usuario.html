@@ -32,9 +32,9 @@
             <select id="role" name="role" 
                     {% if usuario.id == current_user.id %}disabled{% endif %}
                     class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                <option value="usuario" {% if usuario.role == 'usuario' %}selected{% endif %}>👤 Usuário Comum</option>
-                <option value="dono_quadra" {% if usuario.role == 'dono_quadra' %}selected{% endif %}>⚽ Dono de Quadra</option>
-                <option value="admin" {% if usuario.role == 'admin' %}selected{% endif %}>👑 Administrador</option>
+                <option value="usuario" {% if usuario.role == 'usuario' %}selected{% endif %}>Usuário Comum</option>
+                <option value="dono_quadra" {% if usuario.role == 'dono_quadra' %}selected{% endif %}>Dono de Quadra</option>
+                <option value="admin" {% if usuario.role == 'admin' %}selected{% endif %}>Administrador</option>
             </select>
             {% if usuario.id == current_user.id %}
                 <p class="mt-2 text-xs text-gray-500">Você não pode alterar seu próprio tipo de usuário.</p>
@@ -42,7 +42,7 @@
         </div>
         
         <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <p class="text-sm font-medium text-blue-800 mb-2">ℹ️ Informações Adicionais</p>
+            <p class="text-sm font-medium text-blue-800 mb-2">Informações Adicionais</p>
             <div class="space-y-1 text-sm text-blue-700">
                 <p><strong>ID do Usuário:</strong> {{ usuario.id }}</p>
                 <p><strong>Tentativas de Login:</strong> {{ usuario.tentativas_login }}</p>
@@ -59,7 +59,7 @@
         
         <div class="flex gap-3 pt-4">
             <button type="submit"
-                    class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition duration-200">
+                    class="flex-1 bg-resergol-600 hover:bg-resergol-700 text-white font-medium py-3 px-6 rounded-lg transition duration-200">
                 Salvar Alterações
             </button>
             <a href="{{ url_for('admin_usuarios') }}"

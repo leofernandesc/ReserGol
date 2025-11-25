@@ -185,7 +185,7 @@ with app.app_context():
         )
         db.session.add(admin)
         db.session.commit()
-        print("✅ Admin criado: admin@resergol.com / admin123")
+        print("Admin criado: admin@resergol.com / admin123")
 
 if __name__ == '__main__':
     app.run(debug=True)
