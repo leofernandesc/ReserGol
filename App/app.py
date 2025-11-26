@@ -1,11 +1,12 @@
-from flask import Flask, render_template, redirect, url_for
+import os
+from flask import Flask, render_template, redirect, url_for, request, flash
+from datetime import datetime, date, timedelta
 from flask_login import LoginManager, login_required
 from controllers.usuario_controller import UsuarioController
 from models.usuario_model import db, Usuario
-from models.quadra_model import Quadra
+from models.quadra_model import db, Quadra, DataDisponivel, HorarioDisponivel
 from flask_mail import Mail, Message
 from models.reserva_model import Reserva
-
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'sua-chave-secreta'
@@ -117,12 +118,63 @@ def cadastrar_quadra():
     from controllers.quadra_controller import QuadraController
     return QuadraController.cadastrar_quadra()
 
-@app.route('/editar-quadra/<int:quadra_id>', methods=['GET', 'POST'])
-@login_required
+@app.route("/editar-quadra/<int:quadra_id>", methods=["GET", "POST"])
 def editar_quadra(quadra_id):
-    from controllers.quadra_controller import QuadraController
-    return QuadraController.editar_quadra(quadra_id)
+    quadra = Quadra.query.get_or_404(quadra_id)
 
+    # Próximos 7 dias
+    proximos_dias = [date.today() + timedelta(days=i) for i in range(7)]
+    
+    datas = []
+    horarios = {}
+    
+    for d in proximos_dias:
+        # Tenta buscar data existente no banco
+        data_obj = DataDisponivel.query.filter_by(quadra_id=quadra.id, data=d).first()
+        if not data_obj:
+            # Cria objeto em memória só para exibição
+            data_obj = DataDisponivel(quadra_id=quadra.id, data=d)
+        datas.append(data_obj)
+
+        # Horários fixos das 6h às 23h
+        if data_obj.id:
+            horarios[d] = HorarioDisponivel.query.filter_by(data_id=data_obj.id).all()
+        else:
+            horarios[d] = [HorarioDisponivel(horario=f"{h:02d}:00") for h in range(6, 24)]
+
+    if request.method == "POST":
+        # Excluir datas
+        datas_excluir = request.form.getlist("datas_excluir")
+        for d_id in datas_excluir:
+            data = DataDisponivel.query.get(int(d_id))
+            if data:
+                db.session.delete(data)
+
+        # Excluir horários
+        horarios_excluir = request.form.getlist("horarios_excluir")
+        for h_id in horarios_excluir:
+            horario = HorarioDisponivel.query.get(int(h_id))
+            if horario:
+                db.session.delete(horario)
+
+        # Editar campos da quadra
+        quadra.nome = request.form.get("nome", quadra.nome)
+        quadra.endereco = request.form.get("endereco", quadra.endereco)
+        quadra.tipo = request.form.get("tipo", quadra.tipo)
+        quadra.preco_hora = request.form.get("preco_hora", quadra.preco_hora)
+        quadra.descricao = request.form.get("descricao", quadra.descricao)
+
+        db.session.commit()
+        flash("Quadra atualizada com sucesso!")
+        return redirect(url_for("editar_quadra", quadra_id=quadra_id))
+
+    return render_template(
+        "quadras/editar.html",
+        quadra=quadra,
+        datas=datas,
+        horarios=horarios
+    )
+    
 @app.route('/deletar-quadra/<int:quadra_id>')
 @login_required
 def deletar_quadra(quadra_id):
