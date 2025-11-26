@@ -3,106 +3,143 @@
 {% block title %}Reservar Quadra{% endblock %}
 
 {% block content %}
-    <div class="mb-6">
-        <a href="{{ url_for('listar_quadras') }}" class="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium">
-            <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-            </svg>
-            Voltar para Quadras
-        </a>
+<div class="mb-6">
+    <a href="{{ url_for('listar_quadras') }}" class="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium">
+        <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+        </svg>
+        Voltar para Quadras
+    </a>
+</div>
+
+<h2 class="text-3xl font-bold text-gray-800 mb-2">Reservar Quadra</h2>
+<p class="text-xl text-gray-600 mb-6">{{ quadra.nome }}</p>
+
+<!-- Info da Quadra -->
+<div class="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+            <p class="text-sm text-gray-600 mb-1">
+                <span class="font-medium text-gray-700">Tipo:</span>
+                <span class="inline-block ml-2 px-2 py-1 bg-blue-600 text-white rounded text-xs font-medium">
+                    {{ quadra.tipo|capitalize }}
+                </span>
+            </p>
+            <p class="text-sm text-gray-600">
+                <span class="font-medium text-gray-700">Endereço:</span> {{ quadra.endereco }}
+            </p>
+        </div>
+        <div>
+            <p class="text-sm text-gray-600">
+                <span class="font-medium text-gray-700">Preço/Hora:</span>
+                <span class="text-2xl font-bold text-green-600 ml-2">R$ {{ "%.2f"|format(quadra.preco_hora) }}</span>
+            </p>
+            {% if quadra.descricao %}
+            <p class="text-sm text-gray-600 mt-2">
+                <span class="font-medium text-gray-700">Descrição:</span> {{ quadra.descricao }}
+            </p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<form method="POST" class="space-y-6">
+    <!-- Data da reserva -->
+    <div>
+        <label for="data" class="block text-sm font-medium text-gray-700 mb-2">Data da reserva</label>
+        <input type="date" 
+               id="data" 
+               name="data" 
+               value="{{ data_escolhida }}" 
+               min="{{ data_escolhida }}"
+               onchange="this.form.submit()"
+               required
+               class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base">
+        <p class="mt-2 text-xs text-gray-500">Selecione uma data para ver os horários disponíveis</p>
     </div>
 
-    <h2 class="text-3xl font-bold text-gray-800 mb-2">Reservar Quadra</h2>
-    <p class="text-xl text-gray-600 mb-6">{{ quadra.nome }}</p>
-    
-    <!-- Info da Quadra -->
-    <div class="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6 mb-6">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-                <p class="text-sm text-gray-600 mb-1">
-                    <span class="font-medium text-gray-700">Tipo:</span>
-                    <span class="inline-block ml-2 px-2 py-1 bg-blue-600 text-white rounded text-xs font-medium">
-                        {{ quadra.tipo|capitalize }}
-                    </span>
-                </p>
-                <p class="text-sm text-gray-600">
-                    <span class="font-medium text-gray-700">Endereço:</span> {{ quadra.endereco }}
-                </p>
-            </div>
-            <div>
-                <p class="text-sm text-gray-600">
-                    <span class="font-medium text-gray-700">Preço/Hora:</span>
-                    <span class="text-2xl font-bold text-green-600 ml-2">R$ {{ "%.2f"|format(quadra.preco_hora) }}</span>
-                </p>
-                {% if quadra.descricao %}
-                <p class="text-sm text-gray-600 mt-2">
-                    <span class="font-medium text-gray-700">Descrição:</span> {{ quadra.descricao }}
-                </p>
+    <!-- Horário disponível -->
+    <div>
+        <label for="hora" class="block text-sm font-medium text-gray-700 mb-2">Horário disponível</label>
+        <select id="hora" name="hora" required
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base">
+            <option value="">Selecione um horário...</option>
+            {% for hora in horarios_possiveis %}
+                {% if hora in horarios_reservados %}
+                    <option value="{{ hora }}" disabled class="text-gray-400 bg-gray-100">{{ hora }} - INDISPONÍVEL</option>
+                {% else %}
+                    <option value="{{ hora }}" class="text-gray-900">{{ hora }} - Disponível</option>
                 {% endif %}
+            {% endfor %}
+        </select>
+        <p class="mt-2 text-xs text-gray-500">Cada reserva tem duração de 1 hora</p>
+    </div>
+
+    {% if horarios_reservados %}
+    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <p class="text-sm font-medium text-yellow-800 mb-2">Horários já reservados para esta data:</p>
+        <div class="flex flex-wrap gap-2">
+            {% for hora in horarios_reservados|sort %}
+                <span class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">{{ hora }}</span>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Pagamento Hipotético -->
+    <div class="mt-6 p-6 border border-gray-200 rounded-lg bg-gray-50">
+        <h3 class="text-xl font-semibold text-gray-800 mb-4">Forma de Pagamento</h3>
+        <div class="space-y-4">
+            <label class="flex items-center gap-2">
+                <input type="radio" name="pagamento" value="pix" class="form-radio text-blue-600">
+                PIX
+            </label>
+            <label class="flex items-center gap-2">
+                <input type="radio" name="pagamento" value="cartao" class="form-radio text-blue-600">
+                Cartão de Crédito/Débito
+            </label>
+            <label class="flex items-center gap-2">
+                <input type="radio" name="pagamento" value="boleto" class="form-radio text-blue-600">
+                Boleto
+            </label>
+
+            <!-- Campos fictícios do cartão -->
+            <div id="cartao-info" class="hidden mt-4 space-y-3">
+                <input type="text" placeholder="Nome no cartão" class="w-full px-4 py-2 border rounded-lg">
+                <input type="text" placeholder="Número do cartão" class="w-full px-4 py-2 border rounded-lg">
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="text" placeholder="Validade (MM/AA)" class="px-4 py-2 border rounded-lg">
+                    <input type="text" placeholder="CVV" class="px-4 py-2 border rounded-lg">
+                </div>
+                <p class="text-xs text-gray-500">* Estes dados são apenas para demonstração e não serão processados.</p>
             </div>
         </div>
     </div>
-    
-    <form method="POST" class="space-y-6">
-        <div>
-            <label for="data" class="block text-sm font-medium text-gray-700 mb-2">
-                Data da reserva
-            </label>
-            <input type="date" 
-                   id="data" 
-                   name="data" 
-                   value="{{ data_escolhida }}" 
-                   min="{{ data_escolhida }}"
-                   onchange="this.form.submit()"
-                   required
-                   class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base">
-            <p class="mt-2 text-xs text-gray-500">Selecione uma data para ver os horários disponíveis</p>
-        </div>
-        
-        <div>
-            <label for="hora" class="block text-sm font-medium text-gray-700 mb-2">
-                Horário disponível
-            </label>
-            <select id="hora" name="hora" required
-                    class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base">
-                <option value="">Selecione um horário...</option>
-                {% for hora in horarios_possiveis %}
-                    {% if hora in horarios_reservados %}
-                        <option value="{{ hora }}" disabled class="text-gray-400 bg-gray-100">
-                            {{ hora }} - INDISPONÍVEL
-                        </option>
-                    {% else %}
-                        <option value="{{ hora }}" class="text-gray-900">
-                            {{ hora }} - Disponível
-                        </option>
-                    {% endif %}
-                {% endfor %}
-            </select>
-            <p class="mt-2 text-xs text-gray-500">Cada reserva tem duração de 1 hora</p>
-        </div>
-        
-        {% if horarios_reservados %}
-        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-            <p class="text-sm font-medium text-yellow-800 mb-2">Horários já reservados para esta data:</p>
-            <div class="flex flex-wrap gap-2">
-                {% for hora in horarios_reservados|sort %}
-                    <span class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">
-                        {{ hora }}
-                    </span>
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
-        
-        <div class="flex gap-3 pt-4">
-            <button type="submit"
-                    class="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-6 rounded-lg transition duration-200 shadow-md hover:shadow-lg">
-                Confirmar Reserva
-            </button>
-            <a href="{{ url_for('listar_quadras') }}"
-               class="flex-1 text-center bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-3 px-6 rounded-lg transition duration-200">
-                Cancelar
-            </a>
-        </div>
-    </form>
+
+    <!-- Botões -->
+    <div class="flex gap-3 pt-4">
+        <button type="submit"
+                class="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-6 rounded-lg transition duration-200 shadow-md hover:shadow-lg">
+            Confirmar Reserva
+        </button>
+        <a href="{{ url_for('listar_quadras') }}"
+           class="flex-1 text-center bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-3 px-6 rounded-lg transition duration-200">
+            Cancelar
+        </a>
+    </div>
+</form>
+
+<script>
+const radios = document.querySelectorAll('input[name="pagamento"]');
+radios.forEach(radio => {
+    radio.addEventListener('change', () => {
+        const cartaoDiv = document.getElementById('cartao-info');
+        if (radio.value === 'cartao' && radio.checked) {
+            cartaoDiv.classList.remove('hidden');
+        } else {
+            cartaoDiv.classList.add('hidden');
+        }
+    });
+});
+</script>
 {% endblock %}

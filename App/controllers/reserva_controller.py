@@ -46,18 +46,22 @@ class ReservaController:
             hora_inicio = datetime.strptime(hora, '%H:%M').time()
             hora_fim = (datetime.strptime(hora, '%H:%M') + timedelta(hours=1)).time()
             
+            # Captura o tipo de pagamento hipotético
+            pagamento_tipo = request.form.get('pagamento')  # 'pix', 'cartao', 'boleto'
+            
             nova_reserva = Reserva(
                 quadra_id=quadra_id,
                 usuario_id=current_user.id,
                 data=data_escolhida,
                 hora_inicio=hora_inicio,
                 hora_fim=hora_fim,
-                status='ativa'
+                status='ativa',
+                pagamento_tipo=pagamento_tipo
             )
             db.session.add(nova_reserva)
             db.session.commit()
             
-            flash('Reserva realizada com sucesso!', 'success')
+            flash('Reserva realizada com sucesso! (Pagamento hipotético)', 'success')
             return redirect(url_for('minhas_reservas'))
         
         return render_template(
