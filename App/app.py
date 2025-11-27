@@ -1,10 +1,10 @@
 import os
 from flask import Flask, render_template, redirect, url_for, request, flash
 from datetime import datetime, date, timedelta
-from flask_login import LoginManager, login_required
+from flask_login import LoginManager, current_user, login_required
 from controllers.usuario_controller import UsuarioController
 from models.usuario_model import db, Usuario
-from models.quadra_model import db, Quadra, DataDisponivel, HorarioDisponivel
+from models.quadra_model import HorarioBloqueado, db, Quadra, DataDisponivel, HorarioDisponivel
 from flask_mail import Mail, Message
 from models.reserva_model import Reserva
 
@@ -119,60 +119,48 @@ def cadastrar_quadra():
     return QuadraController.cadastrar_quadra()
 
 @app.route("/editar-quadra/<int:quadra_id>", methods=["GET", "POST"])
+@login_required
 def editar_quadra(quadra_id):
     quadra = Quadra.query.get_or_404(quadra_id)
 
-    # Próximos 7 dias
-    proximos_dias = [date.today() + timedelta(days=i) for i in range(7)]
-    
-    datas = []
-    horarios = {}
-    
-    for d in proximos_dias:
-        # Tenta buscar data existente no banco
-        data_obj = DataDisponivel.query.filter_by(quadra_id=quadra.id, data=d).first()
-        if not data_obj:
-            # Cria objeto em memória só para exibição
-            data_obj = DataDisponivel(quadra_id=quadra.id, data=d)
-        datas.append(data_obj)
-
-        # Horários fixos das 6h às 23h
-        if data_obj.id:
-            horarios[d] = HorarioDisponivel.query.filter_by(data_id=data_obj.id).all()
-        else:
-            horarios[d] = [HorarioDisponivel(horario=f"{h:02d}:00") for h in range(6, 24)]
-
     if request.method == "POST":
-        # Excluir datas
-        datas_excluir = request.form.getlist("datas_excluir")
-        for d_id in datas_excluir:
-            data = DataDisponivel.query.get(int(d_id))
-            if data:
-                db.session.delete(data)
+        # Limpa bloqueios antigos do dono
+        HorarioBloqueado.query.filter_by(quadra_id=quadra_id).delete()
 
-        # Excluir horários
-        horarios_excluir = request.form.getlist("horarios_excluir")
-        for h_id in horarios_excluir:
-            horario = HorarioDisponivel.query.get(int(h_id))
-            if horario:
-                db.session.delete(horario)
+        # Para cada checkbox marcado → é UM BLOQUEIO
+        for key in request.form:
+            if key.startswith("horario_"):
+                _, data_str, hora_str = key.split("_")
+                nova_data = datetime.strptime(data_str, "%Y-%m-%d").date()
 
-        # Editar campos da quadra
-        quadra.nome = request.form.get("nome", quadra.nome)
-        quadra.endereco = request.form.get("endereco", quadra.endereco)
-        quadra.tipo = request.form.get("tipo", quadra.tipo)
-        quadra.preco_hora = request.form.get("preco_hora", quadra.preco_hora)
-        quadra.descricao = request.form.get("descricao", quadra.descricao)
+                # Salva horário bloqueado
+                hb = HorarioBloqueado(
+                    quadra_id=quadra_id,
+                    data=nova_data,
+                    hora=hora_str
+                )
+                db.session.add(hb)
 
         db.session.commit()
-        flash("Quadra atualizada com sucesso!")
+        flash("Horários bloqueados atualizados com sucesso!", "success")
         return redirect(url_for("editar_quadra", quadra_id=quadra_id))
+
+    # GET → construir agenda invertida: marcados = bloqueados
+    dias = [datetime.today().date() + timedelta(days=i) for i in range(7)]
+    agenda = {}
+
+    for d in dias:
+        bloqueios = HorarioBloqueado.query.filter_by(
+            quadra_id=quadra_id,
+            data=d
+        ).all()
+        agenda[d.strftime("%Y-%m-%d")] = {b.hora for b in bloqueios}
 
     return render_template(
         "quadras/editar.html",
         quadra=quadra,
-        datas=datas,
-        horarios=horarios
+        dias=dias,
+        agenda=agenda
     )
     
 @app.route('/deletar-quadra/<int:quadra_id>')
@@ -182,11 +170,80 @@ def deletar_quadra(quadra_id):
     return QuadraController.deletar_quadra(quadra_id)
 
 # ===== ROTAS RESERVAS =====
-@app.route('/reservar/<int:quadra_id>', methods=['GET', 'POST'])
-@login_required
+@app.route("/reservar/<int:quadra_id>", methods=["GET", "POST"])
 def reservar_quadra(quadra_id):
-    from controllers.reserva_controller import ReservaController
-    return ReservaController.reservar(quadra_id)
+    quadra = Quadra.query.get_or_404(quadra_id)
+    hoje = date.today()
+    data_escolhida = request.form.get("data", hoje.strftime("%Y-%m-%d"))
+    data_date = datetime.strptime(data_escolhida, "%Y-%m-%d").date()
+
+    # --- Bloqueios do dono ---
+    bloqueios = HorarioBloqueado.query.filter_by(
+        quadra_id=quadra_id,
+        data=data_date
+    ).all()
+    horas_bloqueadas = {b.hora for b in bloqueios}
+
+    # --- Reservas já feitas ---
+    reservas = Reserva.query.filter_by(
+        quadra_id=quadra_id,
+        data=data_date,
+        status="ativa"
+    ).all()
+    horas_reservadas = {r.hora_inicio.strftime("%H:%M") for r in reservas}
+
+    # --- Gerar horários disponíveis para mostrar ---
+    horarios_disponiveis = []
+    horarios_indisponiveis = []
+
+    for h in range(6, 24):
+        hora_str = f"{h:02d}:00"
+        dt_hora = datetime.combine(data_date, datetime.strptime(hora_str, "%H:%M").time())
+
+        if hora_str in horas_bloqueadas:
+            # Não adiciona nos horários disponíveis, nem no select
+            continue
+
+        if hora_str in horas_reservadas:
+            horarios_indisponiveis.append(dt_hora)
+            horarios_disponiveis.append({
+                "horario": dt_hora,
+                "reservado": True
+            })
+            continue
+
+        horarios_disponiveis.append({
+            "horario": dt_hora,
+            "reservado": False
+        })
+
+    # --- Criar reserva ---
+    if request.method == "POST" and request.form.get("hora"):
+        hora_str = request.form.get("hora")
+        hora_inicio = datetime.strptime(hora_str, "%H:%M").time()
+        hora_fim = (datetime.combine(data_date, hora_inicio) + timedelta(hours=1)).time()
+
+        nova_reserva = Reserva(
+            quadra_id=quadra.id,
+            usuario_id=current_user.id,
+            data=data_date,
+            hora_inicio=hora_inicio,
+            hora_fim=hora_fim
+        )
+        db.session.add(nova_reserva)
+        db.session.commit()
+
+        flash("Reserva confirmada com sucesso!", "success")
+        return redirect(url_for("listar_quadras"))
+
+    return render_template(
+        "reservas/reservar.html",
+        quadra=quadra,
+        hoje=hoje.strftime("%Y-%m-%d"),
+        data_escolhida=data_escolhida,
+        horarios_disponiveis=horarios_disponiveis,
+        horarios_indisponiveis=horarios_indisponiveis
+    )
 
 @app.route('/minhas-reservas')
 @login_required
@@ -200,18 +257,40 @@ def cancelar_reserva(reserva_id):
     from controllers.reserva_controller import ReservaController
     return ReservaController.cancelar_reserva(reserva_id)
 
+@app.route("/quadra/<int:quadra_id>/salvar-horarios", methods=["POST"])
+@login_required
+def salvar_horarios_quadra(quadra_id):
+    quadra = Quadra.query.get_or_404(quadra_id)
+
+    # Apaga todos horários
+    DataDisponivel.query.filter_by(quadra_id=quadra_id).delete()
+
+    # Recria com base nos checkbox
+    for key in request.form:
+        if key.startswith("horario_"):
+            _, data_str, hora_str = key.split("_")
+
+            nova_data = datetime.strptime(data_str, "%Y-%m-%d").date()
+            nova_hora = datetime.strptime(hora_str, "%H:%M").time()
+
+            novo = DataDisponivel(
+                quadra_id=quadra_id,
+                data=nova_data,
+                horario=nova_hora
+            )
+            db.session.add(novo)
+
+    db.session.commit()
+    flash("Horários atualizados!", "success")
+    return redirect(url_for("editar_quadra", quadra_id=quadra_id))
+
+
 # ROTAS - Gerenciamento de Quadras pelo Dono
 @app.route('/quadra/<int:quadra_id>/reservas')
 @login_required
 def ver_reservas_quadra(quadra_id):
     from controllers.quadra_controller import QuadraController
     return QuadraController.ver_reservas_quadra(quadra_id)
-
-@app.route('/quadra/<int:quadra_id>/horarios', methods=['GET', 'POST'])
-@login_required
-def gerenciar_horarios_quadra(quadra_id):
-    from controllers.quadra_controller import QuadraController
-    return QuadraController.gerenciar_horarios(quadra_id)
 
 @app.route('/reserva/<int:reserva_id>/cancelar-dono')
 @login_required
