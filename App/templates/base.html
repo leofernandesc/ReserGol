@@ -69,19 +69,27 @@
                         <span class="text-white font-bold text-2xl tracking-tight">RESERGOL</span>
                     </a>
                     
-                                       {% if current_user.is_authenticated %}
+                    {% if current_user.is_authenticated %}
                         <div class="hidden md:flex items-center space-x-1 ml-8">
-                            <a href="{{ url_for('listar_quadras') }}" class="text-white hover:bg-resergol-500 px-3 py-2 rounded-md text-sm font-medium transition">
-                                Quadras
-                            </a>
-                            <a href="{{ url_for('minhas_reservas') }}" class="text-white hover:bg-resergol-500 px-3 py-2 rounded-md text-sm font-medium transition">
-                                Minhas Reservas
-                            </a>
+                            <!-- Quadras (apenas para não-admin) -->
+                            {% if not current_user.is_admin() %}
+                                <a href="{{ url_for('listar_quadras') }}" class="text-white hover:bg-resergol-500 px-3 py-2 rounded-md text-sm font-medium transition">
+                                    Quadras
+                                </a>
+                            {% endif %}
+                            
+                            <!-- Minhas Reservas (apenas para usuários comuns) -->
+                            {% if not current_user.is_admin() and not current_user.is_dono_quadra() %}
+                                <a href="{{ url_for('minhas_reservas') }}" class="text-white hover:bg-resergol-500 px-3 py-2 rounded-md text-sm font-medium transition">
+                                    Minhas Reservas
+                                </a>
+                            {% endif %}
+                            
                             <a href="{{ url_for('dashboard') }}" class="text-white hover:bg-resergol-500 px-3 py-2 rounded-md text-sm font-medium transition">
                                 Dashboard
                             </a>
                             
-                            <!-- Minhas Quadras para Donos -->
+                            <!-- Minhas Quadras para Donos (não admin) -->
                             {% if current_user.is_dono_quadra() and not current_user.is_admin() %}
                                 <a href="{{ url_for('minhas_quadras') }}" class="text-white hover:bg-resergol-500 px-3 py-2 rounded-md text-sm font-medium transition">
                                     Minhas Quadras
@@ -95,7 +103,7 @@
                                 </a>
                             {% endif %}
                             
-                            <!-- Admin -->
+                            <!-- Gerenciar Usuários para Admin -->
                             {% if current_user.is_admin() %}
                                 <a href="{{ url_for('admin_usuarios') }}" class="text-white hover:bg-resergol-500 px-3 py-2 rounded-md text-sm font-medium transition">
                                     Gerenciar Usuários
@@ -104,12 +112,25 @@
                         </div>
                     {% endif %}
 
+
+
                 </div>
                 
-                <div class="flex items-center space-x-2">
+                                <div class="flex items-center space-x-2">
                     {% if current_user.is_authenticated %}
+                        <!-- Botão Nova Quadra para Donos -->
+                        {% if current_user.is_dono_quadra() and not current_user.is_admin() %}
+                            <a href="{{ url_for('cadastrar_quadra') }}" 
+                               class="inline-flex items-center px-4 py-2 bg-green-500 hover:bg-green-600 text-white font-medium text-sm rounded-lg transition duration-200">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                </svg>
+                                Nova Quadra
+                            </a>
+                        {% endif %}
+                        
                         <a href="{{ url_for('perfil') }}" class="text-white hover:bg-resergol-500 px-3 py-2 rounded-md text-sm font-medium transition">
-                             {{ current_user.nome.split()[0] }}
+                            👤 {{ current_user.nome.split()[0] }}
                         </a>
                         <a href="{{ url_for('logout') }}" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium transition">
                             Sair
@@ -123,6 +144,7 @@
                         </a>
                     {% endif %}
                 </div>
+
             </div>
         </div>
     </nav>
