@@ -1,38 +1,44 @@
 import os
 from flask import Flask, render_template, redirect, url_for, request, flash
-from datetime import datetime, date, timedelta
 from flask_login import LoginManager, current_user, login_required
-from controllers.usuario_controller import UsuarioController
-from models.usuario_model import db, Usuario
-from models.quadra_model import HorarioBloqueado, db, Quadra, DataDisponivel, HorarioDisponivel
-from flask_mail import Mail, Message
-from models.reserva_model import Reserva
+from flask_mail import Mail
+from datetime import datetime, date, timedelta
+from models import db, bcrypt
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'sua-chave-secreta'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'        
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = 'seuemail@gmail.com'
 app.config['MAIL_PASSWORD'] = 'suasenhaaplicativo'
 
+
 db.init_app(app)
-login_manager = LoginManager(app)
-login_manager.login_view = 'login'
+bcrypt.init_app(app)
+
+# Importar models APÓS inicializar db
+from models.usuario_model import Usuario
+from models.quadra_model import Quadra
+from models.reserva_model import Reserva
+from controllers.usuario_controller import UsuarioController
+from controllers.quadra_controller import QuadraController
+from controllers.reserva_controller import ReservaController
 
 mail = Mail(app)
+login_manager = LoginManager(app)
+login_manager.login_view = 'login'
 
 @login_manager.user_loader
 def load_user(user_id):
     return Usuario.query.get(int(user_id))
 
-# ROTAS PÚBLICAS
+# ===== ROTAS PÚBLICAS =====
 @app.route('/')
 def index():
-    return render_template('index.html')  
+    return render_template('index.html')
 
 @app.route('/registro', methods=['GET', 'POST'])
 def registro():
@@ -42,20 +48,18 @@ def registro():
 def login():
     return UsuarioController.login()
 
-# ROTAS AUTENTICADAS - USUÁRIO
+# ===== ROTAS AUTENTICADAS - USUÁRIO =====
 @app.route('/logout')
 def logout():
     return UsuarioController.logout()
 
-@app.route('/usuarios')
-def lista_usuarios():
-    return UsuarioController.lista_usuarios()
-
 @app.route('/perfil')
+@login_required
 def perfil():
     return UsuarioController.perfil()
 
 @app.route('/editar-perfil', methods=['GET', 'POST'])
+@login_required
 def editar_perfil():
     return UsuarioController.editar_perfil()
 
@@ -67,257 +71,136 @@ def esqueci_senha():
 def resetar_senha(token):
     return UsuarioController.resetar_senha(token)
 
-# ROTAS ADMIN
+# ===== ROTAS ADMIN - USUÁRIOS =====
 @app.route('/admin/usuarios')
+@login_required
 def admin_usuarios():
     return UsuarioController.admin_listar_usuarios()
 
-@app.route('/admin/promover-usuario/<int:usuario_id>')
-def promover_usuario(usuario_id):
-    return UsuarioController.promover_para_dono(usuario_id)
-
-@app.route('/admin/rebaixar-usuario/<int:usuario_id>')
-def rebaixar_usuario(usuario_id):
-    return UsuarioController.rebaixar_para_usuario(usuario_id)
-
-@app.route('/admin/editar-usuario/<int:usuario_id>', methods=['GET', 'POST'])
+@app.route('/admin/usuario/<int:usuario_id>/editar', methods=['GET', 'POST'])
+@login_required
 def admin_editar_usuario(usuario_id):
     return UsuarioController.admin_editar_usuario(usuario_id)
 
-@app.route('/admin/remover-usuario/<int:usuario_id>')
+@app.route('/admin/usuario/<int:usuario_id>/promover')
+@login_required
+def promover_usuario(usuario_id):
+    return UsuarioController.promover_para_dono(usuario_id)
+
+@app.route('/admin/usuario/<int:usuario_id>/rebaixar')
+@login_required
+def rebaixar_usuario(usuario_id):
+    return UsuarioController.rebaixar_para_usuario(usuario_id)
+
+@app.route('/admin/usuario/<int:usuario_id>/remover')
+@login_required
 def admin_remover_usuario(usuario_id):
     return UsuarioController.admin_remover_usuario(usuario_id)
 
-@app.route('/admin/desbloquear-usuario/<int:usuario_id>')
+@app.route('/admin/usuario/<int:usuario_id>/desbloquear')
+@login_required
 def admin_desbloquear_usuario(usuario_id):
     return UsuarioController.admin_desbloquear_usuario(usuario_id)
 
-@app.route('/admin/bloquear-usuario/<int:usuario_id>')
+@app.route('/admin/usuario/<int:usuario_id>/bloquear')
+@login_required
 def admin_bloquear_usuario(usuario_id):
     return UsuarioController.admin_bloquear_usuario(usuario_id)
 
-# ROTAS - Administração de Quadras (Admin)
+# ===== ROTAS ADMIN - QUADRAS =====
 @app.route('/admin/quadras')
 @login_required
 def admin_quadras():
-    from controllers.quadra_controller import QuadraController
     return QuadraController.admin_listar_quadras()
 
 @app.route('/admin/quadra/nova', methods=['GET', 'POST'])
 @login_required
 def admin_cadastrar_quadra():
-    from controllers.quadra_controller import QuadraController
     return QuadraController.admin_cadastrar_quadra()
 
 @app.route('/admin/quadra/<int:quadra_id>/editar', methods=['GET', 'POST'])
 @login_required
 def admin_editar_quadra(quadra_id):
-    from controllers.quadra_controller import QuadraController
     return QuadraController.admin_editar_quadra(quadra_id)
 
 @app.route('/admin/quadra/<int:quadra_id>/remover')
 @login_required
 def admin_remover_quadra(quadra_id):
-    from controllers.quadra_controller import QuadraController
     return QuadraController.admin_remover_quadra(quadra_id)
 
+@app.route('/admin/quadra/<int:quadra_id>/reservas')
+@login_required
+def admin_ver_reservas_quadra(quadra_id):
+    return QuadraController.admin_ver_reservas_quadra(quadra_id)
 
-# ROTAS QUADRAS
+@app.route('/admin/quadra/<int:quadra_id>/reserva/<int:reserva_id>/cancelar')
+@login_required
+def admin_cancelar_reserva_quadra(quadra_id, reserva_id):
+    return QuadraController.admin_cancelar_reserva_quadra(quadra_id, reserva_id)
+
+# ===== ROTAS QUADRAS - DONO =====
 @app.route('/quadras')
 def listar_quadras():
-    from controllers.quadra_controller import QuadraController
     return QuadraController.listar_quadras()
 
 @app.route('/minhas-quadras')
 @login_required
 def minhas_quadras():
-    from controllers.quadra_controller import QuadraController
     return QuadraController.minhas_quadras()
 
 @app.route('/cadastrar-quadra', methods=['GET', 'POST'])
 @login_required
 def cadastrar_quadra():
-    from controllers.quadra_controller import QuadraController
     return QuadraController.cadastrar_quadra()
 
-@app.route("/editar-quadra/<int:quadra_id>", methods=["GET", "POST"])
+@app.route('/quadra/<int:quadra_id>/editar', methods=['GET', 'POST'])
 @login_required
 def editar_quadra(quadra_id):
-    quadra = Quadra.query.get_or_404(quadra_id)
+    return QuadraController.editar_quadra(quadra_id)
 
-    if request.method == "POST":
-        HorarioBloqueado.query.filter_by(quadra_id=quadra_id).delete()
-
-        for key in request.form:
-            if key.startswith("horario_"):
-                _, data_str, hora_str = key.split("_")
-                nova_data = datetime.strptime(data_str, "%Y-%m-%d").date()
-
-                hb = HorarioBloqueado(
-                    quadra_id=quadra_id,
-                    data=nova_data,
-                    hora=hora_str
-                )
-                db.session.add(hb)
-
-        db.session.commit()
-        flash("Horários bloqueados atualizados com sucesso!", "success")
-        return redirect(url_for("editar_quadra", quadra_id=quadra_id))
-
-    dias = [datetime.today().date() + timedelta(days=i) for i in range(7)]
-    agenda = {}
-
-    for d in dias:
-        bloqueios = HorarioBloqueado.query.filter_by(
-            quadra_id=quadra_id,
-            data=d
-        ).all()
-        agenda[d.strftime("%Y-%m-%d")] = {b.hora for b in bloqueios}
-
-    return render_template(
-        "quadras/editar.html",
-        quadra=quadra,
-        dias=dias,
-        agenda=agenda
-    )
-    
-@app.route('/deletar-quadra/<int:quadra_id>')
+@app.route('/quadra/<int:quadra_id>/deletar')
 @login_required
 def deletar_quadra(quadra_id):
-    from controllers.quadra_controller import QuadraController
     return QuadraController.deletar_quadra(quadra_id)
 
-# ROTAS RESERVAS
-@app.route("/reservar/<int:quadra_id>", methods=["GET", "POST"])
+@app.route('/quadra/<int:quadra_id>/reservas')
+@login_required
+def ver_reservas_quadra(quadra_id):
+    return QuadraController.ver_reservas_quadra(quadra_id)
+
+@app.route('/quadra/<int:quadra_id>/gerenciar-horarios')
+@login_required
+def gerenciar_horarios_quadra(quadra_id):
+    return QuadraController.gerenciar_horarios(quadra_id)
+
+# ===== ROTAS RESERVAS =====
+@app.route('/reservar/<int:quadra_id>', methods=['GET', 'POST'])
+@login_required
 def reservar_quadra(quadra_id):
-    quadra = Quadra.query.get_or_404(quadra_id)
-    hoje = date.today()
-    data_escolhida = request.form.get("data", hoje.strftime("%Y-%m-%d"))
-    data_date = datetime.strptime(data_escolhida, "%Y-%m-%d").date()
-
-    bloqueios = HorarioBloqueado.query.filter_by(
-        quadra_id=quadra_id,
-        data=data_date
-    ).all()
-    horas_bloqueadas = {b.hora for b in bloqueios}
-
-    reservas = Reserva.query.filter_by(
-        quadra_id=quadra_id,
-        data=data_date,
-        status="ativa"
-    ).all()
-    horas_reservadas = {r.hora_inicio.strftime("%H:%M") for r in reservas}
-
-    horarios_disponiveis = []
-    horarios_indisponiveis = []
-
-    for h in range(6, 24):
-        hora_str = f"{h:02d}:00"
-        dt_hora = datetime.combine(data_date, datetime.strptime(hora_str, "%H:%M").time())
-
-        if hora_str in horas_bloqueadas:
-            continue
-
-        if hora_str in horas_reservadas:
-            horarios_indisponiveis.append(dt_hora)
-            horarios_disponiveis.append({
-                "horario": dt_hora,
-                "reservado": True
-            })
-            continue
-
-        horarios_disponiveis.append({
-            "horario": dt_hora,
-            "reservado": False
-        })
-
-    if request.method == "POST" and request.form.get("hora"):
-        hora_str = request.form.get("hora")
-        hora_inicio = datetime.strptime(hora_str, "%H:%M").time()
-        hora_fim = (datetime.combine(data_date, hora_inicio) + timedelta(hours=1)).time()
-
-        nova_reserva = Reserva(
-            quadra_id=quadra.id,
-            usuario_id=current_user.id,
-            data=data_date,
-            hora_inicio=hora_inicio,
-            hora_fim=hora_fim
-        )
-        db.session.add(nova_reserva)
-        db.session.commit()
-
-        flash("Reserva confirmada com sucesso!", "success")
-        return redirect(url_for("listar_quadras"))
-
-    return render_template(
-        "reservas/reservar.html",
-        quadra=quadra,
-        hoje=hoje.strftime("%Y-%m-%d"),
-        data_escolhida=data_escolhida,
-        horarios_disponiveis=horarios_disponiveis,
-        horarios_indisponiveis=horarios_indisponiveis
-    )
+    return ReservaController.reservar(quadra_id)
 
 @app.route('/minhas-reservas')
 @login_required
 def minhas_reservas():
-    from controllers.reserva_controller import ReservaController
     return ReservaController.minhas_reservas()
 
-@app.route('/cancelar-reserva/<int:reserva_id>')
+@app.route('/reserva/<int:reserva_id>/cancelar')
 @login_required
 def cancelar_reserva(reserva_id):
-    from controllers.reserva_controller import ReservaController
     return ReservaController.cancelar_reserva(reserva_id)
 
-@app.route("/quadra/<int:quadra_id>/salvar-horarios", methods=["POST"])
+@app.route('/quadra/<int:quadra_id>/reserva/<int:reserva_id>/cancelar-dono')
 @login_required
-def salvar_horarios_quadra(quadra_id):
-    quadra = Quadra.query.get_or_404(quadra_id)
-
-    DataDisponivel.query.filter_by(quadra_id=quadra_id).delete()
-
-    for key in request.form:
-        if key.startswith("horario_"):
-            _, data_str, hora_str = key.split("_")
-
-            nova_data = datetime.strptime(data_str, "%Y-%m-%d").date()
-            nova_hora = datetime.strptime(hora_str, "%H:%M").time()
-
-            novo = DataDisponivel(
-                quadra_id=quadra_id,
-                data=nova_data,
-                horario=nova_hora
-            )
-            db.session.add(novo)
-
-    db.session.commit()
-    flash("Horários atualizados!", "success")
-    return redirect(url_for("editar_quadra", quadra_id=quadra_id))
-
-
-# ROTAS - Gerenciamento de Quadras pelo Dono
-@app.route('/quadra/<int:quadra_id>/reservas')
-@login_required
-def ver_reservas_quadra(quadra_id):
-    from controllers.quadra_controller import QuadraController
-    return QuadraController.ver_reservas_quadra(quadra_id)
-
-@app.route('/reserva/<int:reserva_id>/cancelar-dono')
-@login_required
-def dono_cancelar_reserva(reserva_id):
-    from controllers.quadra_controller import QuadraController
+def dono_cancelar_reserva(quadra_id, reserva_id):
     return QuadraController.cancelar_reserva_dono(reserva_id)
 
-# INICIALIZAÇÃO
+# ===== INICIALIZAÇÃO DO BANCO =====
 with app.app_context():
     db.create_all()
     
     # Cria admin padrão se não existir
     admin = Usuario.query.filter_by(email='admin@resergol.com').first()
     if not admin:
-        from flask_bcrypt import Bcrypt
-        bcrypt = Bcrypt()
         senha_hash = bcrypt.generate_password_hash('admin123').decode('utf-8')
         admin = Usuario(
             nome='Administrador',
@@ -327,7 +210,7 @@ with app.app_context():
         )
         db.session.add(admin)
         db.session.commit()
-        print("Admin criado: admin@resergol.com / admin123")
+        print("✓ Admin criado: admin@resergol.com / admin123")
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -104,8 +104,13 @@
                     </div>
                     
                     <div class="flex gap-2">
-                        <a href="{{ url_for('admin_editar_quadra', quadra_id=quadra.id) }}" 
+                        <a href="{{ url_for('admin_ver_reservas_quadra', quadra_id=quadra.id) }}" 
                            class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition">
+                            Ver Reservas
+                        </a>
+                        
+                        <a href="{{ url_for('admin_editar_quadra', quadra_id=quadra.id) }}" 
+                           class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition">
                             Editar
                         </a>
                         
@@ -115,6 +120,7 @@
                             Remover
                         </a>
                     </div>
+
                 </div>
             </div>
             {% endfor %}

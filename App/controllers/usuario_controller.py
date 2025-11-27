@@ -1,16 +1,11 @@
 from flask import render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_user, logout_user, login_required, current_user
-from flask_bcrypt import Bcrypt
 from flask_mail import Message
-from models.usuario_model import db, Usuario
+from models import db, bcrypt  # ← Importar daqui
+from models.usuario_model import Usuario
 from itsdangerous import URLSafeTimedSerializer
 from datetime import datetime, timedelta
-from functools import wraps
-from flask import abort
 
-bcrypt = Bcrypt()
-
-# ===== FUNÇÕES FORA DA CLASSE =====
 def gerar_token(email):
     s = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
     return s.dumps(email, salt='redefinir-senha')
@@ -19,361 +14,216 @@ def validar_token(token, tempo_expiracao=3600):
     s = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
     try:
         email = s.loads(token, salt='redefinir-senha', max_age=tempo_expiracao)
+        return email
     except Exception:
         return None
-    return email
 
 def enviar_email_reset(email, token):
-    from app import mail  # Importa aqui para evitar import circular
+    from app import mail
     link = url_for('resetar_senha', token=token, _external=True)
-    msg = Message("Redefinir sua senha - ReserGol",
-                  sender=current_app.config['MAIL_USERNAME'],
-                  recipients=[email])
+    msg = Message(
+        "Redefinir sua senha - ReserGol",
+        sender=current_app.config['MAIL_USERNAME'],
+        recipients=[email]
+    )
     msg.body = f"Para redefinir sua senha, acesse: {link}"
     mail.send(msg)
 
-# Decorador para proteger rotas admin
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if not current_user.is_authenticated or not current_user.is_admin():
-            flash('Acesso negado! Apenas administradores.', 'danger')
-            return redirect(url_for('index'))
-        return f(*args, **kwargs)
-    return decorated_function
-
-# Adicione dentro da classe UsuarioController:
-
-@login_required
-def admin_listar_usuarios():
-    """Apenas admin - lista todos os usuários com opção de promover/rebaixar"""
-    if not current_user.is_admin():
-        flash('Acesso negado!', 'danger')
-        return redirect(url_for('index'))
-    
-    usuarios = Usuario.query.all()
-    return render_template('admin_usuarios.html', usuarios=usuarios)
-
-@login_required
-def promover_para_dono(usuario_id):
-    """Admin promove usuário para dono de quadra"""
-    if not current_user.is_admin():
-        flash('Acesso negado!', 'danger')
-        return redirect(url_for('index'))
-    
-    usuario = Usuario.query.get_or_404(usuario_id)
-    
-    if usuario.role == 'admin':
-        flash('Não é possível alterar o role de um administrador!', 'warning')
-        return redirect(url_for('admin_usuarios'))
-    
-    usuario.role = 'dono_quadra'
-    db.session.commit()
-    flash(f'{usuario.nome} foi promovido para Dono de Quadra!', 'success')
-    return redirect(url_for('admin_usuarios'))
-
-@login_required
-def rebaixar_para_usuario(usuario_id):
-    """Admin rebaixa dono de quadra para usuário comum"""
-    if not current_user.is_admin():
-        flash('Acesso negado!', 'danger')
-        return redirect(url_for('index'))
-    
-    usuario = Usuario.query.get_or_404(usuario_id)
-    
-    if usuario.role == 'admin':
-        flash('Não é possível alterar o role de um administrador!', 'warning')
-        return redirect(url_for('admin_usuarios'))
-    
-    usuario.role = 'usuario'
-    db.session.commit()
-    flash(f'{usuario.nome} foi rebaixado para Usuário Comum!', 'success')
-    return redirect(url_for('admin_usuarios'))
-
-
-# ===== CLASSE CONTROLLER =====
 class UsuarioController:
+    
+    @staticmethod
     def registro():
         if current_user.is_authenticated:
             return redirect(url_for('index'))
-
+        
         if request.method == 'POST':
             nome = request.form.get('nome')
             email = request.form.get('email')
             senha = request.form.get('senha')
-
-            if not nome or not email or not senha:
+            confirmar_senha = request.form.get('confirmar_senha')
+            
+            if not nome or not email or not senha or not confirmar_senha:
                 flash('Todos os campos são obrigatórios!', 'danger')
                 return redirect(url_for('registro'))
-
-            usuario_existe = Usuario.query.filter_by(email=email).first()
-            if usuario_existe:
-                flash('Este email já está cadastrado!', 'warning')
+            
+            if senha != confirmar_senha:
+                flash('As senhas não coincidem!', 'danger')
                 return redirect(url_for('registro'))
-
+            
+            if Usuario.query.filter_by(email=email).first():
+                flash('Este email já está cadastrado!', 'danger')
+                return redirect(url_for('registro'))
+            
             senha_hash = bcrypt.generate_password_hash(senha).decode('utf-8')
             novo_usuario = Usuario(nome=nome, email=email, senha_hash=senha_hash)
             db.session.add(novo_usuario)
             db.session.commit()
-
+            
             flash('Registro realizado com sucesso! Faça login.', 'success')
             return redirect(url_for('login'))
-
+        
         return render_template('registro.html')
     
+    @staticmethod
     def login():
         if current_user.is_authenticated:
             return redirect(url_for('index'))
-
+        
         if request.method == 'POST':
             email = request.form.get('email')
             senha = request.form.get('senha')
             lembrar = request.form.get('lembrar')
-
+            
             usuario = Usuario.query.filter_by(email=email).first()
-
-            # Verifica se o usuário existe
+            
             if not usuario:
                 flash('Email ou senha incorretos!', 'danger')
                 return render_template('login.html')
-
-            # Verifica se a conta está bloqueada
+            
             if usuario.esta_bloqueado():
                 tempo_restante = (usuario.bloqueado_ate - datetime.utcnow()).total_seconds() / 60
-                flash(f'Conta bloqueada temporariamente. Tente novamente em {int(tempo_restante)} minutos.', 'danger')
+                flash(f'Conta bloqueada. Tente novamente em {int(tempo_restante)} minutos.', 'danger')
                 return render_template('login.html')
-
-            # Verifica a senha
-            if bcrypt.check_password_hash(usuario.senha_hash, senha):
-                # Login bem-sucedido - reseta tentativas
-                usuario.resetar_tentativas()
-                db.session.commit()
-                
-                login_user(usuario, remember=lembrar)
-                flash(f'Bem-vindo, {usuario.nome}!', 'success')
-                proximo = request.args.get('next')
-                return redirect(proximo) if proximo else redirect(url_for('index'))
-            else:
-                # Senha incorreta - incrementa tentativas
+            
+            if not usuario.check_password(senha):
                 usuario.tentativas_login += 1
-                
-                # Define o limite de tentativas
-                MAX_TENTATIVAS = 5
-                TEMPO_BLOQUEIO_MINUTOS = 15
-                
-                if usuario.tentativas_login >= MAX_TENTATIVAS:
-                    # Bloqueia a conta por 15 minutos
-                    usuario.bloqueado_ate = datetime.utcnow() + timedelta(minutes=TEMPO_BLOQUEIO_MINUTOS)
-                    db.session.commit()
-                    flash(f'Conta bloqueada por {TEMPO_BLOQUEIO_MINUTOS} minutos devido a múltiplas tentativas de login.', 'danger')
-                else:
-                    tentativas_restantes = MAX_TENTATIVAS - usuario.tentativas_login
-                    db.session.commit()
-                    flash(f'Email ou senha incorretos! Você tem {tentativas_restantes} tentativa(s) restante(s).', 'danger')
-
-        return render_template('login.html')
-
-    
-    def esqueci_senha():
-        if request.method == 'POST':
-            email = request.form.get('email')
-            usuario = Usuario.query.filter_by(email=email).first()
-            if not usuario:
-                flash('Nenhum usuário com esse email!', 'danger')
-                return redirect(url_for('esqueci_senha'))
-
-            token = gerar_token(email)
-            enviar_email_reset(email, token)
-            flash('Email de redefinição enviado!', 'info')
-            return redirect(url_for('login'))
-        return render_template('esqueci_senha.html')
-
-    def resetar_senha(token):
-        email = validar_token(token)
-        if not email:
-            flash('Link expirado ou inválido. Solicite novamente.', 'danger')
-            return redirect(url_for('esqueci_senha'))
-
-        usuario = Usuario.query.filter_by(email=email).first()
-        if not usuario:
-            flash('Usuário não encontrado!', 'danger')
-            return redirect(url_for('esqueci_senha'))
-
-        if request.method == 'POST':
-            senha_nova = request.form.get('senha_nova')
-            senha_confirmar = request.form.get('senha_confirmar')
-            if not senha_nova or senha_nova != senha_confirmar:
-                flash('As senhas devem ser iguais e não podem estar em branco!', 'danger')
-                return redirect(url_for('resetar_senha', token=token))
-            usuario.senha_hash = bcrypt.generate_password_hash(senha_nova).decode('utf-8')
+                if usuario.tentativas_login >= 5:
+                    usuario.bloqueado_ate = datetime.utcnow() + timedelta(hours=24)
+                db.session.commit()
+                flash('Email ou senha incorretos!', 'danger')
+                return render_template('login.html')
+            
+            usuario.tentativas_login = 0
+            usuario.bloqueado_ate = None
             db.session.commit()
-            flash('Senha redefinida com sucesso. Faça login!', 'success')
-            return redirect(url_for('login'))
-        return render_template('resetar_senha.html', token=token)
-
-    @login_required
+            
+            login_user(usuario, remember=bool(lembrar))
+            flash(f'Bem-vindo, {usuario.nome}!', 'success')
+            return redirect(url_for('index'))
+        
+        return render_template('login.html')
+    
+    @staticmethod
     def logout():
         logout_user()
-        flash('Logout realizado com sucesso!', 'info')
+        flash('Você saiu da sua conta.', 'success')
         return redirect(url_for('index'))
-
-    @login_required
-    def lista_usuarios():
-        usuarios = Usuario.query.all()
-        return render_template('lista_usuarios.html', usuarios=usuarios)
-
+    
+    @staticmethod
     @login_required
     def perfil():
-        return render_template('perfil.html', usuario=current_user)
-
+        return render_template('perfil.html')
+    
+    @staticmethod
     @login_required
     def editar_perfil():
         if request.method == 'POST':
             nome = request.form.get('nome')
             email = request.form.get('email')
             senha_atual = request.form.get('senha_atual')
-            senha_nova = request.form.get('senha_nova')
-            senha_confirmar = request.form.get('senha_confirmar')
-
+            nova_senha = request.form.get('nova_senha')
+            confirmar_nova_senha = request.form.get('confirmar_nova_senha')
+            
             if not nome or not email:
                 flash('Nome e email são obrigatórios!', 'danger')
                 return redirect(url_for('editar_perfil'))
-
+            
             usuario_existe = Usuario.query.filter_by(email=email).first()
             if usuario_existe and usuario_existe.id != current_user.id:
-                flash('Este email já está em uso por outro usuário!', 'warning')
+                flash('Este email já está em uso!', 'danger')
                 return redirect(url_for('editar_perfil'))
-
-            current_user.nome = nome
-            current_user.email = email
-
-            if senha_nova:
-                if not senha_atual:
-                    flash('Para alterar a senha, você precisa informar a senha atual!', 'danger')
+            
+            if senha_atual or nova_senha or confirmar_nova_senha:
+                if not senha_atual or not nova_senha or not confirmar_nova_senha:
+                    flash('Preencha todos os campos de senha!', 'danger')
                     return redirect(url_for('editar_perfil'))
-
-                if not bcrypt.check_password_hash(current_user.senha_hash, senha_atual):
+                
+                if not current_user.check_password(senha_atual):
                     flash('Senha atual incorreta!', 'danger')
                     return redirect(url_for('editar_perfil'))
-
-                if senha_nova != senha_confirmar:
-                    flash('As senhas novas não coincidem!', 'danger')
+                
+                if nova_senha != confirmar_nova_senha:
+                    flash('As novas senhas não coincidem!', 'danger')
                     return redirect(url_for('editar_perfil'))
-
-                current_user.senha_hash = bcrypt.generate_password_hash(senha_nova).decode('utf-8')
-
+                
+                current_user.senha_hash = bcrypt.generate_password_hash(nova_senha).decode('utf-8')
+            
+            current_user.nome = nome
+            current_user.email = email
             db.session.commit()
+            
             flash('Perfil atualizado com sucesso!', 'success')
             return redirect(url_for('perfil'))
-
-        return render_template('editar_perfil.html', usuario=current_user)
+        
+        return render_template('editar_perfil.html')
     
-    # Adicione dentro da classe UsuarioController:
-
+    @staticmethod
+    def esqueci_senha():
+        if request.method == 'POST':
+            email = request.form.get('email')
+            usuario = Usuario.query.filter_by(email=email).first()
+            
+            if usuario:
+                token = gerar_token(email)
+                enviar_email_reset(email, token)
+            
+            flash('Se o email existir, você receberá um link para redefinir sua senha.', 'info')
+            return redirect(url_for('login'))
+        
+        return render_template('esqueci_senha.html')
+    
+    @staticmethod
+    def resetar_senha(token):
+        email = validar_token(token)
+        
+        if not email:
+            flash('Link inválido ou expirado!', 'danger')
+            return redirect(url_for('login'))
+        
+        if request.method == 'POST':
+            nova_senha = request.form.get('senha')
+            confirmar_senha = request.form.get('confirmar_senha')
+            
+            if not nova_senha or not confirmar_senha:
+                flash('Preencha todos os campos!', 'danger')
+                return redirect(url_for('resetar_senha', token=token))
+            
+            if nova_senha != confirmar_senha:
+                flash('As senhas não coincidem!', 'danger')
+                return redirect(url_for('resetar_senha', token=token))
+            
+            usuario = Usuario.query.filter_by(email=email).first()
+            usuario.senha_hash = bcrypt.generate_password_hash(nova_senha).decode('utf-8')
+            db.session.commit()
+            
+            flash('Senha redefinida com sucesso! Faça login.', 'success')
+            return redirect(url_for('login'))
+        
+        return render_template('resetar_senha.html')
+    
+    # ===== ADMIN =====
+    
+    @staticmethod
     @login_required
     def admin_listar_usuarios():
-        """Apenas admin - lista todos os usuários com opção de promover/rebaixar"""
         if not current_user.is_admin():
             flash('Acesso negado!', 'danger')
             return redirect(url_for('index'))
         
-        usuarios = Usuario.query.all()
-        return render_template('admin_usuarios.html', usuarios=usuarios)
-
-    @login_required
-    def promover_para_dono(usuario_id):
-        """Admin promove usuário para dono de quadra"""
-        if not current_user.is_admin():
-            flash('Acesso negado!', 'danger')
-            return redirect(url_for('index'))
-        
-        usuario = Usuario.query.get_or_404(usuario_id)
-        
-        if usuario.role == 'admin':
-            flash('Não é possível alterar o role de um administrador!', 'warning')
-            return redirect(url_for('admin_usuarios'))
-        
-        usuario.role = 'dono_quadra'
-        db.session.commit()
-        flash(f'{usuario.nome} foi promovido para Dono de Quadra!', 'success')
-        return redirect(url_for('admin_usuarios'))
-
-    @login_required
-    def rebaixar_para_usuario(usuario_id):
-        """Admin rebaixa dono de quadra para usuário comum"""
-        if not current_user.is_admin():
-            flash('Acesso negado!', 'danger')
-            return redirect(url_for('index'))
-        
-        usuario = Usuario.query.get_or_404(usuario_id)
-        
-        if usuario.role == 'admin':
-            flash('Não é possível alterar o role de um administrador!', 'warning')
-            return redirect(url_for('admin_usuarios'))
-        
-        usuario.role = 'usuario'
-        db.session.commit()
-        flash(f'{usuario.nome} foi rebaixado para Usuário Comum!', 'success')
-        return redirect(url_for('admin_usuarios'))
-
-    @login_required
-    def admin_listar_usuarios():
-        """Apenas admin - lista todos os usuários com opção de promover/rebaixar"""
-        if not current_user.is_admin():
-            flash('Acesso negado!', 'danger')
-            return redirect(url_for('index'))
-        
-        # Busca por nome ou email
         busca = request.args.get('busca', '')
-        
         if busca:
             usuarios = Usuario.query.filter(
-                (Usuario.nome.contains(busca)) | (Usuario.email.contains(busca))
+                (Usuario.nome.ilike(f'%{busca}%')) | 
+                (Usuario.email.ilike(f'%{busca}%'))
             ).all()
         else:
             usuarios = Usuario.query.all()
         
         return render_template('admin_usuarios.html', usuarios=usuarios, busca=busca)
-
-    @login_required
-    def promover_para_dono(usuario_id):
-        """Admin promove usuário para dono de quadra"""
-        if not current_user.is_admin():
-            flash('Acesso negado!', 'danger')
-            return redirect(url_for('index'))
-        
-        usuario = Usuario.query.get_or_404(usuario_id)
-        
-        if usuario.role == 'admin':
-            flash('Não é possível alterar o role de um administrador!', 'warning')
-            return redirect(url_for('admin_usuarios'))
-        
-        usuario.role = 'dono_quadra'
-        db.session.commit()
-        flash(f'{usuario.nome} foi promovido para Dono de Quadra!', 'success')
-        return redirect(url_for('admin_usuarios'))
-
-    @login_required
-    def rebaixar_para_usuario(usuario_id):
-        """Admin rebaixa dono de quadra para usuário comum"""
-        if not current_user.is_admin():
-            flash('Acesso negado!', 'danger')
-            return redirect(url_for('index'))
-        
-        usuario = Usuario.query.get_or_404(usuario_id)
-        
-        if usuario.role == 'admin':
-            flash('Não é possível alterar o role de um administrador!', 'warning')
-            return redirect(url_for('admin_usuarios'))
-        
-        usuario.role = 'usuario'
-        db.session.commit()
-        flash(f'{usuario.nome} foi rebaixado para Usuário Comum!', 'success')
-        return redirect(url_for('admin_usuarios'))
-
+    
+    @staticmethod
     @login_required
     def admin_editar_usuario(usuario_id):
-        """Admin edita qualquer usuário"""
         if not current_user.is_admin():
             flash('Acesso negado!', 'danger')
             return redirect(url_for('index'))
@@ -385,22 +235,17 @@ class UsuarioController:
             email = request.form.get('email')
             role = request.form.get('role')
             
-            # Validações
             if not nome or not email:
                 flash('Nome e email são obrigatórios!', 'danger')
                 return redirect(url_for('admin_editar_usuario', usuario_id=usuario_id))
             
-            # Verifica se email já existe para outro usuário
             usuario_existe = Usuario.query.filter_by(email=email).first()
             if usuario_existe and usuario_existe.id != usuario.id:
-                flash('Este email já está em uso!', 'warning')
+                flash('Este email já está em uso!', 'danger')
                 return redirect(url_for('admin_editar_usuario', usuario_id=usuario_id))
             
-            # Atualiza dados
             usuario.nome = nome
             usuario.email = email
-            
-            # Só permite alterar role se não for o próprio admin editando a si mesmo
             if usuario.id != current_user.id:
                 usuario.role = role
             
@@ -409,74 +254,106 @@ class UsuarioController:
             return redirect(url_for('admin_usuarios'))
         
         return render_template('admin_editar_usuario.html', usuario=usuario)
-
+    
+    @staticmethod
     @login_required
-    def admin_remover_usuario(usuario_id):
-        """Admin remove um usuário"""
+    def promover_para_dono(usuario_id):
         if not current_user.is_admin():
             flash('Acesso negado!', 'danger')
             return redirect(url_for('index'))
         
         usuario = Usuario.query.get_or_404(usuario_id)
         
-        # Não permite remover a si mesmo
+        if usuario.role == 'admin':
+            flash('Não é possível alterar o role de um administrador!', 'warning')
+            return redirect(url_for('admin_usuarios'))
+        
+        usuario.role = 'dono_quadra'
+        db.session.commit()
+        flash(f'{usuario.nome} foi promovido para Dono de Quadra!', 'success')
+        return redirect(url_for('admin_usuarios'))
+    
+    @staticmethod
+    @login_required
+    def rebaixar_para_usuario(usuario_id):
+        if not current_user.is_admin():
+            flash('Acesso negado!', 'danger')
+            return redirect(url_for('index'))
+        
+        usuario = Usuario.query.get_or_404(usuario_id)
+        
+        if usuario.role == 'admin':
+            flash('Não é possível alterar o role de um administrador!', 'warning')
+            return redirect(url_for('admin_usuarios'))
+        
+        usuario.role = 'usuario'
+        db.session.commit()
+        flash(f'{usuario.nome} foi rebaixado para Usuário Comum!', 'success')
+        return redirect(url_for('admin_usuarios'))
+    
+    @staticmethod
+    @login_required
+    def admin_remover_usuario(usuario_id):
+        if not current_user.is_admin():
+            flash('Acesso negado!', 'danger')
+            return redirect(url_for('index'))
+        
+        usuario = Usuario.query.get_or_404(usuario_id)
+        
         if usuario.id == current_user.id:
             flash('Você não pode remover sua própria conta!', 'warning')
             return redirect(url_for('admin_usuarios'))
         
-        # Não permite remover outro admin
         if usuario.role == 'admin':
             flash('Não é possível remover outro administrador!', 'warning')
             return redirect(url_for('admin_usuarios'))
         
-        nome_usuario = usuario.nome
+        nome = usuario.nome
         db.session.delete(usuario)
         db.session.commit()
-        flash(f'Usuário {nome_usuario} foi removido com sucesso!', 'success')
-        return redirect(url_for('admin_usuarios'))
-
-    @login_required
-    def admin_desbloquear_usuario(usuario_id):
-        """Admin desbloqueia usuário manualmente"""
-        if not current_user.is_admin():
-            flash('Acesso negado!', 'danger')
-            return redirect(url_for('index'))
         
-        usuario = Usuario.query.get_or_404(usuario_id)
-        usuario.resetar_tentativas()
-        db.session.commit()
-        flash(f'Usuário {usuario.nome} foi desbloqueado!', 'success')
+        flash(f'Usuário {nome} foi removido com sucesso!', 'success')
         return redirect(url_for('admin_usuarios'))
     
+    @staticmethod
+    @login_required
+    def admin_desbloquear_usuario(usuario_id):
+        if not current_user.is_admin():
+            flash('Acesso negado!', 'danger')
+            return redirect(url_for('index'))
+        
+        usuario = Usuario.query.get_or_404(usuario_id)
+        usuario.tentativas_login = 0
+        usuario.bloqueado_ate = None
+        db.session.commit()
+        
+        flash(f'{usuario.nome} foi desbloqueado!', 'success')
+        return redirect(url_for('admin_usuarios'))
+    
+    @staticmethod
     @login_required
     def admin_bloquear_usuario(usuario_id):
-        """Admin bloqueia um usuário manualmente"""
         if not current_user.is_admin():
             flash('Acesso negado!', 'danger')
             return redirect(url_for('index'))
         
         usuario = Usuario.query.get_or_404(usuario_id)
         
-        # Não permite bloquear a si mesmo
         if usuario.id == current_user.id:
             flash('Você não pode bloquear sua própria conta!', 'warning')
             return redirect(url_for('admin_usuarios'))
         
-        # Não permite bloquear outro admin
         if usuario.role == 'admin':
             flash('Não é possível bloquear outro administrador!', 'warning')
             return redirect(url_for('admin_usuarios'))
         
-        # Verifica se já está bloqueado
         if usuario.esta_bloqueado():
-            flash(f'Usuário {usuario.nome} já está bloqueado!', 'warning')
+            flash(f'{usuario.nome} já está bloqueado!', 'warning')
             return redirect(url_for('admin_usuarios'))
         
-        # Bloqueia por 24 horas (você pode personalizar o tempo)
-        from datetime import datetime, timedelta
         usuario.bloqueado_ate = datetime.utcnow() + timedelta(hours=24)
-        usuario.tentativas_login = 5  # Marca como se tivesse excedido tentativas
+        usuario.tentativas_login = 5
         db.session.commit()
         
-        flash(f'Usuário {usuario.nome} foi bloqueado por 24 horas!', 'success')
+        flash(f'{usuario.nome} foi bloqueado por 24 horas!', 'success')
         return redirect(url_for('admin_usuarios'))
