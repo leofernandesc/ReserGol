@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Quadra - Admin{% endblock %}
+
+{% block content %}
+    <div class="mb-6">
+        <a href="{{ url_for('admin_quadras') }}" class="inline-flex items-center text-resergol-600 hover:text-resergol-700 font-medium">
+            <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+            Voltar para Administrar Quadras
+        </a>
+    </div>
+
+    <h2 class="text-3xl font-bold text-gray-800 mb-6">Editar Quadra</h2>
+    
+    <form method="POST" class="space-y-6 max-w-2xl">
+        <div>
+            <label for="nome" class="block text-sm font-medium text-gray-700 mb-2">Nome da Quadra *</label>
+            <input type="text" id="nome" name="nome" value="{{ quadra.nome }}" required
+                   class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-resergol-500 focus:border-resergol-500">
+        </div>
+        
+        <div>
+            <label for="tipo" class="block text-sm font-medium text-gray-700 mb-2">Tipo *</label>
+            <select id="tipo" name="tipo" required
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-resergol-500 focus:border-resergol-500">
+                <option value="futebol" {% if quadra.tipo == 'futebol' %}selected{% endif %}>Futebol</option>
+                <option value="futsal" {% if quadra.tipo == 'futsal' %}selected{% endif %}>Futsal</option>
+                <option value="society" {% if quadra.tipo == 'society' %}selected{% endif %}>Society</option>
+                <option value="tenis" {% if quadra.tipo == 'tenis' %}selected{% endif %}>Tênis</option>
+                <option value="basquete" {% if quadra.tipo == 'basquete' %}selected{% endif %}>Basquete</option>
+                <option value="volei" {% if quadra.tipo == 'volei' %}selected{% endif %}>Vôlei</option>
+                <option value="beach_tennis" {% if quadra.tipo == 'beach_tennis' %}selected{% endif %}>Beach Tennis</option>
+            </select>
+        </div>
+        
+        <div>
+            <label for="endereco" class="block text-sm font-medium text-gray-700 mb-2">Endereço Completo *</label>
+            <input type="text" id="endereco" name="endereco" value="{{ quadra.endereco }}" required
+                   class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-resergol-500 focus:border-resergol-500">
+        </div>
+        
+        <div>
+            <label for="preco_hora" class="block text-sm font-medium text-gray-700 mb-2">Preço por Hora (R$) *</label>
+            <div class="relative">
+                <span class="absolute left-3 top-2 text-gray-500">R$</span>
+                <input type="number" id="preco_hora" name="preco_hora" step="0.01" value="{{ quadra.preco_hora }}" required
+                       class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-resergol-500 focus:border-resergol-500">
+            </div>
+        </div>
+        
+        <div>
+            <label for="dono_id" class="block text-sm font-medium text-gray-700 mb-2">Dono da Quadra *</label>
+            <select id="dono_id" name="dono_id"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-resergol-500 focus:border-resergol-500">
+                {% for dono in donos %}
+                    <option value="{{ dono.id }}" {% if dono.id == quadra.dono_id %}selected{% endif %}>
+                        {{ dono.nome }} ({{ dono.email }})
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div>
+            <label for="descricao" class="block text-sm font-medium text-gray-700 mb-2">Descrição</label>
+            <textarea id="descricao" name="descricao" rows="4"
+                      class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-resergol-500 focus:border-resergol-500 resize-vertical">{{ quadra.descricao }}</textarea>
+        </div>
+        
+        <div class="flex items-center">
+            <input type="checkbox" id="ativa" name="ativa" {% if quadra.ativa %}checked{% endif %}
+                   class="h-4 w-4 text-resergol-600 border-gray-300 rounded focus:ring-resergol-500">
+            <label for="ativa" class="ml-2 text-sm text-gray-700">
+                Quadra Ativa
+            </label>
+        </div>
+        
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <p class="text-sm font-medium text-blue-800 mb-2">Informações da Quadra</p>
+            <ul class="text-sm text-blue-700 space-y-1">
+                <li><strong>ID:</strong> {{ quadra.id }}</li>
+                <li><strong>Cadastrada em:</strong> {{ quadra.criado_em.strftime('%d/%m/%Y às %H:%M') if quadra.criado_em else 'Data não disponível' }}</li>
+                <li><strong>Total de Reservas:</strong> {{ quadra.reservas|length }}</li>
+            </ul>
+        </div>
+        
+        <div class="flex gap-3 pt-4">
+            <button type="submit"
+                    class="flex-1 bg-resergol-600 hover:bg-resergol-700 text-white font-medium py-3 px-6 rounded-lg transition duration-200">
+                Salvar Alterações
+            </button>
+            <a href="{{ url_for('admin_quadras') }}"
+               class="flex-1 text-center bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-3 px-6 rounded-lg transition duration-200">
+                Cancelar
+            </a>
+        </div>
+    </form>
+{% endblock %}

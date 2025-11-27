@@ -100,6 +100,32 @@ def admin_desbloquear_usuario(usuario_id):
 def admin_bloquear_usuario(usuario_id):
     return UsuarioController.admin_bloquear_usuario(usuario_id)
 
+# ROTAS - Administração de Quadras (Admin)
+@app.route('/admin/quadras')
+@login_required
+def admin_quadras():
+    from controllers.quadra_controller import QuadraController
+    return QuadraController.admin_listar_quadras()
+
+@app.route('/admin/quadra/nova', methods=['GET', 'POST'])
+@login_required
+def admin_cadastrar_quadra():
+    from controllers.quadra_controller import QuadraController
+    return QuadraController.admin_cadastrar_quadra()
+
+@app.route('/admin/quadra/<int:quadra_id>/editar', methods=['GET', 'POST'])
+@login_required
+def admin_editar_quadra(quadra_id):
+    from controllers.quadra_controller import QuadraController
+    return QuadraController.admin_editar_quadra(quadra_id)
+
+@app.route('/admin/quadra/<int:quadra_id>/remover')
+@login_required
+def admin_remover_quadra(quadra_id):
+    from controllers.quadra_controller import QuadraController
+    return QuadraController.admin_remover_quadra(quadra_id)
+
+
 # ===== ROTAS QUADRAS =====
 @app.route('/quadras')
 def listar_quadras():

@@ -82,5 +82,21 @@
             </div>
         </a>
         {% endif %}
+        <!-- Card: Administrar Quadras (só para admins) -->
+        {% if current_user.is_admin() %}
+        <a href="{{ url_for('admin_quadras') }}" class="group block">
+            <div class="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-xl p-6 hover:shadow-xl transition-all duration-300">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="text-4xl">🏢</div>
+                    <svg class="w-6 h-6 text-purple-600 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-bold text-gray-800 mb-1">Administrar Quadras</h3>
+                <p class="text-sm text-gray-600">Gerencie todas as quadras do sistema</p>
+            </div>
+        </a>
+        {% endif %}
+
     </div>
 {% endblock %}
