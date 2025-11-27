@@ -51,42 +51,48 @@
                id="data" 
                name="data" 
                value="{{ data_escolhida }}" 
-               min="{{ data_escolhida }}"
+               min="{{ hoje }}"
                onchange="this.form.submit()"
                required
                class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base">
         <p class="mt-2 text-xs text-gray-500">Selecione uma data para ver os horários disponíveis</p>
     </div>
 
-    <!-- Horário disponível -->
+    <!-- Horários disponíveis -->
     <div>
         <label for="hora" class="block text-sm font-medium text-gray-700 mb-2">Horário disponível</label>
         <select id="hora" name="hora" required
                 class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base">
             <option value="">Selecione um horário...</option>
-            {% for hora in horarios_possiveis %}
-                {% if hora in horarios_reservados %}
-                    <option value="{{ hora }}" disabled class="text-gray-400 bg-gray-100">{{ hora }} - INDISPONÍVEL</option>
+            {% for h in horarios_disponiveis %}
+                {% if h.reservado %}
+                    <option value="{{ h.horario.strftime('%H:%M') }}" disabled class="text-gray-400 bg-gray-100">
+                        {{ h.horario.strftime('%H:%M') }} - INDISPONÍVEL
+                    </option>
                 {% else %}
-                    <option value="{{ hora }}" class="text-gray-900">{{ hora }} - Disponível</option>
+                    <option value="{{ h.horario.strftime('%H:%M') }}">
+                        {{ h.horario.strftime('%H:%M') }} - Disponível
+                    </option>
                 {% endif %}
             {% endfor %}
         </select>
         <p class="mt-2 text-xs text-gray-500">Cada reserva tem duração de 1 hora</p>
     </div>
 
-    {% if horarios_reservados %}
+    {% if horarios_indisponiveis %}
     <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-        <p class="text-sm font-medium text-yellow-800 mb-2">Horários já reservados para esta data:</p>
+        <p class="text-sm font-medium text-yellow-800 mb-2">Horários já reservados:</p>
         <div class="flex flex-wrap gap-2">
-            {% for hora in horarios_reservados|sort %}
-                <span class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">{{ hora }}</span>
+            {% for h in horarios_indisponiveis %}
+                <span class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">
+                    {{ h.strftime('%H:%M') }}
+                </span>
             {% endfor %}
         </div>
     </div>
     {% endif %}
 
-    <!-- Pagamento Hipotético -->
+    <!-- Pagamento -->
     <div class="mt-6 p-6 border border-gray-200 rounded-lg bg-gray-50">
         <h3 class="text-xl font-semibold text-gray-800 mb-4">Forma de Pagamento</h3>
         <div class="space-y-4">
@@ -103,7 +109,6 @@
                 Boleto
             </label>
 
-            <!-- Campos fictícios do cartão -->
             <div id="cartao-info" class="hidden mt-4 space-y-3">
                 <input type="text" placeholder="Nome no cartão" class="w-full px-4 py-2 border rounded-lg">
                 <input type="text" placeholder="Número do cartão" class="w-full px-4 py-2 border rounded-lg">
@@ -111,12 +116,11 @@
                     <input type="text" placeholder="Validade (MM/AA)" class="px-4 py-2 border rounded-lg">
                     <input type="text" placeholder="CVV" class="px-4 py-2 border rounded-lg">
                 </div>
-                <p class="text-xs text-gray-500">* Estes dados são apenas para demonstração e não serão processados.</p>
+                <p class="text-xs text-gray-500">* Apenas demonstração</p>
             </div>
         </div>
     </div>
 
-    <!-- Botões -->
     <div class="flex gap-3 pt-4">
         <button type="submit"
                 class="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-6 rounded-lg transition duration-200 shadow-md hover:shadow-lg">
@@ -133,13 +137,10 @@
 const radios = document.querySelectorAll('input[name="pagamento"]');
 radios.forEach(radio => {
     radio.addEventListener('change', () => {
-        const cartaoDiv = document.getElementById('cartao-info');
-        if (radio.value === 'cartao' && radio.checked) {
-            cartaoDiv.classList.remove('hidden');
-        } else {
-            cartaoDiv.classList.add('hidden');
-        }
+        const div = document.getElementById('cartao-info');
+        div.classList.toggle('hidden', radio.value !== 'cartao');
     });
 });
 </script>
+
 {% endblock %}

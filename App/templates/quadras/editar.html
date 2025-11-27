@@ -3,19 +3,49 @@
 {% block title %}Editar Quadra - {{ quadra.nome }}{% endblock %}
 
 {% block content %}
+
 <h2 class="text-3xl font-bold mb-6">Editar Quadra</h2>
 
+<style>
+    .horario-item {
+        position: relative;
+        padding: 6px 12px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        cursor: pointer;
+        background: #f7f7f7;
+        transition: 0.2s;
+        user-select: none;
+    }
+    .horario-item.selected {
+        background: #ff2600ff !important;
+        color: white;
+        border-color: #ff2600ff;
+    }
+    .horario-item:hover {
+        background: #e5e5e5;
+    }
+
+    /* Checkbox cobre toda a área do botão */
+    .horario-item input {
+        position: absolute;
+        inset: 0;   /* ocupa todo o label */
+        opacity: 0;
+        cursor: pointer;
+    }
+</style>
+
 <form method="POST" class="space-y-6">
-    <!-- Dados da quadra -->
+
+    <!-- Dados básicos -->
     <div>
         <label class="block font-medium mb-1">Nome *</label>
-        <input type="text" name="nome" value="{{ quadra.nome }}" required
-               class="w-full px-3 py-2 border rounded">
+        <input type="text" name="nome" value="{{ quadra.nome }}" required class="w-full px-3 py-2 border rounded">
     </div>
 
     <div>
         <label class="block font-medium mb-1">Tipo *</label>
-        <select name="tipo" required class="w-full px-3 py-2 border rounded">
+        <select name="tipo" class="w-full px-3 py-2 border rounded" required>
             <option value="futebol" {% if quadra.tipo=='futebol' %}selected{% endif %}>Futebol</option>
             <option value="futsal" {% if quadra.tipo=='futsal' %}selected{% endif %}>Futsal</option>
             <option value="society" {% if quadra.tipo=='society' %}selected{% endif %}>Society</option>
@@ -28,53 +58,61 @@
 
     <div>
         <label class="block font-medium mb-1">Endereço *</label>
-        <input type="text" name="endereco" value="{{ quadra.endereco }}" required
-               class="w-full px-3 py-2 border rounded">
+        <input type="text" name="endereco" value="{{ quadra.endereco }}" required class="w-full px-3 py-2 border rounded">
     </div>
 
     <div>
         <label class="block font-medium mb-1">Preço por Hora *</label>
-        <input type="number" name="preco_hora" step="0.01" value="{{ quadra.preco_hora }}" required
-               class="w-full px-3 py-2 border rounded">
+        <input type="number" step="0.01" name="preco_hora" value="{{ quadra.preco_hora }}" required class="w-full px-3 py-2 border rounded">
     </div>
 
     <div>
         <label class="block font-medium mb-1">Descrição</label>
-        <textarea name="descricao" rows="4" class="w-full px-3 py-2 border rounded">{{ quadra.descricao }}</textarea>
+        <textarea name="descricao" rows="3" class="w-full px-3 py-2 border rounded">{{ quadra.descricao }}</textarea>
     </div>
 
-    <!-- Datas e horários -->
-    <h3 class="text-2xl font-bold mt-6 mb-2">Próximos 7 dias</h3>
 
-    {% for data in datas %}
-        <div class="mb-4 p-3 border rounded">
-            <strong>{{ data.data.strftime('%d/%m/%Y') }}</strong>
+    <!-- Horários -->
+    <h3 class="text-2xl font-bold mt-8 mb-4">Editar Horários — Próximos 7 dias</h3>
+    <p class="text-gray-700 mb-4">
+    <strong>Marque os horários que deseja bloquear.</strong>
+</p>
 
-            <!-- Excluir data -->
-            {% if data.id %}
-                <label class="inline-flex items-center ml-2">
-                    <input type="checkbox" name="datas_excluir" value="{{ data.id }}" class="mr-1">
-                    Excluir data
-                </label>
-            {% endif %}
+    {% for dia in dias %}
+        {% set dia_str = dia.strftime("%Y-%m-%d") %}
 
-            <!-- Horários -->
+        <div class="mb-4 p-3 border rounded bg-gray-50">
+            <strong>{{ dia.strftime('%d/%m/%Y') }}</strong>
+
             <div class="mt-2 flex flex-wrap gap-2">
-                {% for h in horarios[data.data] %}
-                    <label class="inline-flex items-center">
-                        {% if h.id %}
-                            <input type="checkbox" name="horarios_excluir" value="{{ h.id }}" class="mr-1">
-                        {% else %}
-                            <input type="checkbox" disabled class="mr-1">
-                        {% endif %}
-                        {{ h.horario }}
+                {% for h in range(6, 24) %}
+                    {% set hora = "%02d:00" % h %}
+                    {% set checked = (dia_str, hora) in horarios_bloqueados %}
+                    
+                    <label class="horario-item {% if checked %}selected{% endif %}">
+                        <input type="checkbox"
+                               name="horario_{{ dia_str }}_{{ hora }}"
+                               {% if checked %}checked{% endif %}>
+                        {{ hora }}
                     </label>
                 {% endfor %}
             </div>
         </div>
     {% endfor %}
 
-    <button type="submit" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded">Salvar Alterações</button>
+    <button type="submit" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded">
+        Salvar Alterações
+    </button>
+
 </form>
+
+<script>
+    document.querySelectorAll(".horario-item input").forEach(input => {
+        input.addEventListener("change", (e) => {
+            let item = e.target.closest(".horario-item");
+            item.classList.toggle("selected", e.target.checked);
+        });
+    });
+</script>
 
 {% endblock %}

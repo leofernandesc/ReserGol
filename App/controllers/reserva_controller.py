@@ -1,75 +1,84 @@
-from flask import render_template, redirect, url_for, flash, request
-from flask_login import login_required, current_user
-from datetime import datetime, timedelta
-from models.usuario_model import db
-from models.quadra_model import Quadra
+from flask import render_template, request, redirect, url_for, flash
+from flask_login import current_user, login_required
+from models.quadra_model import Quadra, DataDisponivel
 from models.reserva_model import Reserva
+from models.usuario_model import db
+from datetime import datetime, timedelta, date
 
 class ReservaController:
-    
+
     @staticmethod
     @login_required
     def reservar(quadra_id):
-        """Página de reserva de horários"""
         quadra = Quadra.query.get_or_404(quadra_id)
-        
-        # Data escolhida (padrão: hoje)
-        data_hoje = datetime.utcnow().date()
-        data_escolhida_str = request.args.get('data') or request.form.get('data') or str(data_hoje)
-        
-        try:
-            data_escolhida = datetime.strptime(data_escolhida_str, '%Y-%m-%d').date()
-        except:
-            data_escolhida = data_hoje
-        
-        # Horários possíveis (6h às 22h)
-        horarios_possiveis = [f"{h:02d}:00" for h in range(6, 23)]
-        
-        # Pega reservas existentes para a quadra e data
-        reservas = Reserva.query.filter_by(
-            quadra_id=quadra_id, 
-            data=data_escolhida, 
-            status='ativa'
+
+        # Data escolhida pelo usuário ou hoje
+        data_escolhida = request.form.get("data") or date.today().isoformat()
+        data_obj = datetime.strptime(data_escolhida, "%Y-%m-%d").date()
+
+        # Horários possíveis (do dono)
+        data_disponivel = DataDisponivel.query.filter_by(
+            quadra_id=quadra.id,
+            data=data_obj
+        ).first()
+        horarios_possiveis = [h.horario for h in data_disponivel.horarios] if data_disponivel else []
+
+        # Horários bloqueados pelo dono
+        horarios_bloqueados = [hb.hora for hb in quadra.horarios_bloqueados if hb.data == data_obj]
+
+        # Horários já reservados
+        reservas_ativas = Reserva.query.filter_by(
+            quadra_id=quadra.id,
+            data=data_obj,
+            status="ativa"
         ).all()
-        
-        horarios_reservados = set([r.hora_inicio.strftime('%H:%M') for r in reservas])
-        
-        # Processar reserva
-        if request.method == 'POST' and request.form.get('hora'):
-            hora = request.form['hora']
-            
-            if hora in horarios_reservados:
-                flash('Esse horário acabou de ser reservado por outro usuário!', 'danger')
-                return redirect(url_for('reservar_quadra', quadra_id=quadra_id))
-            
-            # Criar nova reserva
-            hora_inicio = datetime.strptime(hora, '%H:%M').time()
-            hora_fim = (datetime.strptime(hora, '%H:%M') + timedelta(hours=1)).time()
-            
-            # Captura o tipo de pagamento hipotético
-            pagamento_tipo = request.form.get('pagamento')  # 'pix', 'cartao', 'boleto'
-            
+        horarios_reservados = [r.hora_inicio.strftime("%H:%M") for r in reservas_ativas]
+
+        # Converter todos para HH:MM string para comparar
+        horarios_possiveis_str = [h.strftime("%H:%M") if isinstance(h, (datetime, date, timedelta)) else str(h) for h in horarios_possiveis]
+
+        # Filtrar disponíveis
+        horarios_disponiveis = [
+            h for h in horarios_possiveis_str if h not in horarios_bloqueados and h not in horarios_reservados
+        ]
+
+        # POST: criar reserva
+        if request.method == "POST" and request.form.get("hora"):
+            hora_str = request.form["hora"]
+            hora_inicio = datetime.strptime(hora_str, "%H:%M").time()
+            hora_fim = (datetime.combine(date.today(), hora_inicio) + timedelta(hours=1)).time()
+
             nova_reserva = Reserva(
-                quadra_id=quadra_id,
+                quadra_id=quadra.id,
                 usuario_id=current_user.id,
-                data=data_escolhida,
+                data=data_obj,
                 hora_inicio=hora_inicio,
-                hora_fim=hora_fim,
-                status='ativa',
-                pagamento_tipo=pagamento_tipo
+                hora_fim=hora_fim
             )
+
             db.session.add(nova_reserva)
             db.session.commit()
-            
-            flash('Reserva realizada com sucesso! (Pagamento hipotético)', 'success')
-            return redirect(url_for('minhas_reservas'))
-        
+
+            flash("Reserva realizada com sucesso!", "success")
+            return redirect(url_for("minhas_reservas"))
+
+        # Preparar template
+        hoje_str = date.today().isoformat()
+        horarios_dict = [
+            {"horario": datetime.strptime(h, "%H:%M"), "reservado": False} for h in horarios_disponiveis
+        ]
+
+        horarios_indisponiveis = [
+            datetime.strptime(h, "%H:%M") for h in horarios_reservados + horarios_bloqueados
+        ]
+
         return render_template(
-            'reservas/reservar.html',
+            "reservar.html",
             quadra=quadra,
             data_escolhida=data_escolhida,
-            horarios_possiveis=horarios_possiveis,
-            horarios_reservados=horarios_reservados
+            hoje=hoje_str,
+            horarios_disponiveis=horarios_dict,
+            horarios_indisponiveis=horarios_indisponiveis
         )
     
     @staticmethod

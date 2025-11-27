@@ -1,5 +1,5 @@
 from models.usuario_model import db
-from datetime import datetime
+from datetime import date
 
 class Quadra(db.Model):
     __tablename__ = "quadra"
@@ -23,7 +23,7 @@ class Quadra(db.Model):
     )
 
     def __repr__(self):
-        return f'<Quadra {self.nome}>'
+        return f"<Quadra {self.nome}>"
 
 
 class DataDisponivel(db.Model):
@@ -54,3 +54,16 @@ class HorarioDisponivel(db.Model):
 
     def __repr__(self):
         return f"<Horario {self.horario}>"
+    
+class HorarioBloqueado(db.Model):
+    __tablename__ = "horarios_bloqueados"
+
+    id = db.Column(db.Integer, primary_key=True)
+    quadra_id = db.Column(db.Integer, db.ForeignKey("quadra.id"), nullable=False)
+    data = db.Column(db.Date, nullable=False)
+    hora = db.Column(db.String(5), nullable=False)
+
+    quadra = db.relationship("Quadra", backref="horarios_bloqueados")
+
+    def __repr__(self):
+        return f"<Bloqueado {self.data} {self.hora} quadra={self.quadra_id}>"
