@@ -85,10 +85,6 @@
                                 </a>
                             {% endif %}
                             
-                            <a href="{{ url_for('dashboard') }}" class="text-white hover:bg-resergol-500 px-3 py-2 rounded-md text-sm font-medium transition">
-                                Dashboard
-                            </a>
-                            
                             <!-- Minhas Quadras para Donos (não admin) -->
                             {% if current_user.is_dono_quadra() and not current_user.is_admin() %}
                                 <a href="{{ url_for('minhas_quadras') }}" class="text-white hover:bg-resergol-500 px-3 py-2 rounded-md text-sm font-medium transition">

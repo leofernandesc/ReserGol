@@ -49,7 +49,7 @@ def admin_listar_usuarios():
     """Apenas admin - lista todos os usuários com opção de promover/rebaixar"""
     if not current_user.is_admin():
         flash('Acesso negado!', 'danger')
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('index'))
     
     usuarios = Usuario.query.all()
     return render_template('admin_usuarios.html', usuarios=usuarios)
@@ -59,7 +59,7 @@ def promover_para_dono(usuario_id):
     """Admin promove usuário para dono de quadra"""
     if not current_user.is_admin():
         flash('Acesso negado!', 'danger')
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('index'))
     
     usuario = Usuario.query.get_or_404(usuario_id)
     
@@ -77,7 +77,7 @@ def rebaixar_para_usuario(usuario_id):
     """Admin rebaixa dono de quadra para usuário comum"""
     if not current_user.is_admin():
         flash('Acesso negado!', 'danger')
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('index'))
     
     usuario = Usuario.query.get_or_404(usuario_id)
     
@@ -95,7 +95,7 @@ def rebaixar_para_usuario(usuario_id):
 class UsuarioController:
     def registro():
         if current_user.is_authenticated:
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('index'))
 
         if request.method == 'POST':
             nome = request.form.get('nome')
@@ -123,7 +123,7 @@ class UsuarioController:
     
     def login():
         if current_user.is_authenticated:
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('index'))
 
         if request.method == 'POST':
             email = request.form.get('email')
@@ -152,7 +152,7 @@ class UsuarioController:
                 login_user(usuario, remember=lembrar)
                 flash(f'Bem-vindo, {usuario.nome}!', 'success')
                 proximo = request.args.get('next')
-                return redirect(proximo) if proximo else redirect(url_for('dashboard'))
+                return redirect(proximo) if proximo else redirect(url_for('index'))
             else:
                 # Senha incorreta - incrementa tentativas
                 usuario.tentativas_login += 1
@@ -210,10 +210,6 @@ class UsuarioController:
             flash('Senha redefinida com sucesso. Faça login!', 'success')
             return redirect(url_for('login'))
         return render_template('resetar_senha.html', token=token)
-
-    @login_required
-    def dashboard():
-        return render_template('dashboard.html', usuario=current_user)
 
     @login_required
     def logout():
@@ -279,7 +275,7 @@ class UsuarioController:
         """Apenas admin - lista todos os usuários com opção de promover/rebaixar"""
         if not current_user.is_admin():
             flash('Acesso negado!', 'danger')
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('index'))
         
         usuarios = Usuario.query.all()
         return render_template('admin_usuarios.html', usuarios=usuarios)
@@ -289,7 +285,7 @@ class UsuarioController:
         """Admin promove usuário para dono de quadra"""
         if not current_user.is_admin():
             flash('Acesso negado!', 'danger')
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('index'))
         
         usuario = Usuario.query.get_or_404(usuario_id)
         
@@ -307,7 +303,7 @@ class UsuarioController:
         """Admin rebaixa dono de quadra para usuário comum"""
         if not current_user.is_admin():
             flash('Acesso negado!', 'danger')
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('index'))
         
         usuario = Usuario.query.get_or_404(usuario_id)
         
@@ -325,7 +321,7 @@ class UsuarioController:
         """Apenas admin - lista todos os usuários com opção de promover/rebaixar"""
         if not current_user.is_admin():
             flash('Acesso negado!', 'danger')
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('index'))
         
         # Busca por nome ou email
         busca = request.args.get('busca', '')
@@ -344,7 +340,7 @@ class UsuarioController:
         """Admin promove usuário para dono de quadra"""
         if not current_user.is_admin():
             flash('Acesso negado!', 'danger')
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('index'))
         
         usuario = Usuario.query.get_or_404(usuario_id)
         
@@ -362,7 +358,7 @@ class UsuarioController:
         """Admin rebaixa dono de quadra para usuário comum"""
         if not current_user.is_admin():
             flash('Acesso negado!', 'danger')
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('index'))
         
         usuario = Usuario.query.get_or_404(usuario_id)
         
@@ -380,7 +376,7 @@ class UsuarioController:
         """Admin edita qualquer usuário"""
         if not current_user.is_admin():
             flash('Acesso negado!', 'danger')
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('index'))
         
         usuario = Usuario.query.get_or_404(usuario_id)
         
@@ -419,7 +415,7 @@ class UsuarioController:
         """Admin remove um usuário"""
         if not current_user.is_admin():
             flash('Acesso negado!', 'danger')
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('index'))
         
         usuario = Usuario.query.get_or_404(usuario_id)
         
@@ -444,7 +440,7 @@ class UsuarioController:
         """Admin desbloqueia usuário manualmente"""
         if not current_user.is_admin():
             flash('Acesso negado!', 'danger')
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('index'))
         
         usuario = Usuario.query.get_or_404(usuario_id)
         usuario.resetar_tentativas()
@@ -457,7 +453,7 @@ class UsuarioController:
         """Admin bloqueia um usuário manualmente"""
         if not current_user.is_admin():
             flash('Acesso negado!', 'danger')
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('index'))
         
         usuario = Usuario.query.get_or_404(usuario_id)
         

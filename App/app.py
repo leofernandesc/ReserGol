@@ -43,10 +43,6 @@ def login():
     return UsuarioController.login()
 
 # ===== ROTAS AUTENTICADAS - USUÁRIO =====
-@app.route('/dashboard')
-def dashboard():
-    return UsuarioController.dashboard()
-
 @app.route('/logout')
 def logout():
     return UsuarioController.logout()
