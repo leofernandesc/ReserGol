@@ -29,7 +29,7 @@ mail = Mail(app)
 def load_user(user_id):
     return Usuario.query.get(int(user_id))
 
-# ===== ROTAS PÚBLICAS =====
+# ROTAS PÚBLICAS
 @app.route('/')
 def index():
     return render_template('index.html')  
@@ -42,7 +42,7 @@ def registro():
 def login():
     return UsuarioController.login()
 
-# ===== ROTAS AUTENTICADAS - USUÁRIO =====
+# ROTAS AUTENTICADAS - USUÁRIO
 @app.route('/logout')
 def logout():
     return UsuarioController.logout()
@@ -67,7 +67,7 @@ def esqueci_senha():
 def resetar_senha(token):
     return UsuarioController.resetar_senha(token)
 
-# ===== ROTAS ADMIN =====
+# ROTAS ADMIN
 @app.route('/admin/usuarios')
 def admin_usuarios():
     return UsuarioController.admin_listar_usuarios()
@@ -122,7 +122,7 @@ def admin_remover_quadra(quadra_id):
     return QuadraController.admin_remover_quadra(quadra_id)
 
 
-# ===== ROTAS QUADRAS =====
+# ROTAS QUADRAS
 @app.route('/quadras')
 def listar_quadras():
     from controllers.quadra_controller import QuadraController
@@ -146,16 +146,13 @@ def editar_quadra(quadra_id):
     quadra = Quadra.query.get_or_404(quadra_id)
 
     if request.method == "POST":
-        # Limpa bloqueios antigos do dono
         HorarioBloqueado.query.filter_by(quadra_id=quadra_id).delete()
 
-        # Para cada checkbox marcado → é UM BLOQUEIO
         for key in request.form:
             if key.startswith("horario_"):
                 _, data_str, hora_str = key.split("_")
                 nova_data = datetime.strptime(data_str, "%Y-%m-%d").date()
 
-                # Salva horário bloqueado
                 hb = HorarioBloqueado(
                     quadra_id=quadra_id,
                     data=nova_data,
@@ -167,7 +164,6 @@ def editar_quadra(quadra_id):
         flash("Horários bloqueados atualizados com sucesso!", "success")
         return redirect(url_for("editar_quadra", quadra_id=quadra_id))
 
-    # GET → construir agenda invertida: marcados = bloqueados
     dias = [datetime.today().date() + timedelta(days=i) for i in range(7)]
     agenda = {}
 
@@ -191,7 +187,7 @@ def deletar_quadra(quadra_id):
     from controllers.quadra_controller import QuadraController
     return QuadraController.deletar_quadra(quadra_id)
 
-# ===== ROTAS RESERVAS =====
+# ROTAS RESERVAS
 @app.route("/reservar/<int:quadra_id>", methods=["GET", "POST"])
 def reservar_quadra(quadra_id):
     quadra = Quadra.query.get_or_404(quadra_id)
@@ -199,14 +195,12 @@ def reservar_quadra(quadra_id):
     data_escolhida = request.form.get("data", hoje.strftime("%Y-%m-%d"))
     data_date = datetime.strptime(data_escolhida, "%Y-%m-%d").date()
 
-    # --- Bloqueios do dono ---
     bloqueios = HorarioBloqueado.query.filter_by(
         quadra_id=quadra_id,
         data=data_date
     ).all()
     horas_bloqueadas = {b.hora for b in bloqueios}
 
-    # --- Reservas já feitas ---
     reservas = Reserva.query.filter_by(
         quadra_id=quadra_id,
         data=data_date,
@@ -214,7 +208,6 @@ def reservar_quadra(quadra_id):
     ).all()
     horas_reservadas = {r.hora_inicio.strftime("%H:%M") for r in reservas}
 
-    # --- Gerar horários disponíveis para mostrar ---
     horarios_disponiveis = []
     horarios_indisponiveis = []
 
@@ -223,7 +216,6 @@ def reservar_quadra(quadra_id):
         dt_hora = datetime.combine(data_date, datetime.strptime(hora_str, "%H:%M").time())
 
         if hora_str in horas_bloqueadas:
-            # Não adiciona nos horários disponíveis, nem no select
             continue
 
         if hora_str in horas_reservadas:
@@ -239,7 +231,6 @@ def reservar_quadra(quadra_id):
             "reservado": False
         })
 
-    # --- Criar reserva ---
     if request.method == "POST" and request.form.get("hora"):
         hora_str = request.form.get("hora")
         hora_inicio = datetime.strptime(hora_str, "%H:%M").time()
@@ -284,10 +275,8 @@ def cancelar_reserva(reserva_id):
 def salvar_horarios_quadra(quadra_id):
     quadra = Quadra.query.get_or_404(quadra_id)
 
-    # Apaga todos horários
     DataDisponivel.query.filter_by(quadra_id=quadra_id).delete()
 
-    # Recria com base nos checkbox
     for key in request.form:
         if key.startswith("horario_"):
             _, data_str, hora_str = key.split("_")
@@ -320,7 +309,7 @@ def dono_cancelar_reserva(reserva_id):
     from controllers.quadra_controller import QuadraController
     return QuadraController.cancelar_reserva_dono(reserva_id)
 
-# ===== INICIALIZAÇÃO =====
+# INICIALIZAÇÃO
 with app.app_context():
     db.create_all()
     

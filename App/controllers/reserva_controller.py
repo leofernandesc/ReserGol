@@ -12,21 +12,17 @@ class ReservaController:
     def reservar(quadra_id):
         quadra = Quadra.query.get_or_404(quadra_id)
 
-        # Data escolhida pelo usuário ou hoje
         data_escolhida = request.form.get("data") or date.today().isoformat()
         data_obj = datetime.strptime(data_escolhida, "%Y-%m-%d").date()
 
-        # Horários possíveis (do dono)
         data_disponivel = DataDisponivel.query.filter_by(
             quadra_id=quadra.id,
             data=data_obj
         ).first()
         horarios_possiveis = [h.horario for h in data_disponivel.horarios] if data_disponivel else []
 
-        # Horários bloqueados pelo dono
         horarios_bloqueados = [hb.hora for hb in quadra.horarios_bloqueados if hb.data == data_obj]
 
-        # Horários já reservados
         reservas_ativas = Reserva.query.filter_by(
             quadra_id=quadra.id,
             data=data_obj,
@@ -34,15 +30,13 @@ class ReservaController:
         ).all()
         horarios_reservados = [r.hora_inicio.strftime("%H:%M") for r in reservas_ativas]
 
-        # Converter todos para HH:MM string para comparar
         horarios_possiveis_str = [h.strftime("%H:%M") if isinstance(h, (datetime, date, timedelta)) else str(h) for h in horarios_possiveis]
 
-        # Filtrar disponíveis
         horarios_disponiveis = [
             h for h in horarios_possiveis_str if h not in horarios_bloqueados and h not in horarios_reservados
         ]
 
-        # POST: criar reserva
+        # cria reserva
         if request.method == "POST" and request.form.get("hora"):
             hora_str = request.form["hora"]
             hora_inicio = datetime.strptime(hora_str, "%H:%M").time()
@@ -62,7 +56,6 @@ class ReservaController:
             flash("Reserva realizada com sucesso!", "success")
             return redirect(url_for("minhas_reservas"))
 
-        # Preparar template
         hoje_str = date.today().isoformat()
         horarios_dict = [
             {"horario": datetime.strptime(h, "%H:%M"), "reservado": False} for h in horarios_disponiveis
@@ -97,17 +90,14 @@ class ReservaController:
         """Cancela uma reserva do usuário"""
         reserva = Reserva.query.get_or_404(reserva_id)
         
-        # Verifica se a reserva é do usuário atual
         if reserva.usuario_id != current_user.id:
             flash('Você não tem permissão para cancelar esta reserva!', 'danger')
             return redirect(url_for('minhas_reservas'))
         
-        # Verifica se já está cancelada
         if reserva.status == 'cancelada':
             flash('Esta reserva já foi cancelada!', 'warning')
             return redirect(url_for('minhas_reservas'))
         
-        # Cancela a reserva
         reserva.status = 'cancelada'
         db.session.commit()
         
